@@ -43,6 +43,21 @@
         android:textSize="12sp"
         android:visibility="gone" />
 
+    <!-- Pesan panduan saat belum ada video diputar -->
+    <TextView
+        android:id="@+id/tvEmptyMediaGuide"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/badge_vault"
+        android:lineSpacingExtra="4dp"
+        android:padding="16dp"
+        android:text="🔍 Belum ada video yang diputar pada halaman ini.\n\n💡 Tips Seperti UC Browser:\nCukup buka halaman web mana saja (YouTube, streaming film, medsos, dll) dan tekan tombol Play pada video. YourBrowser akan otomatis mencegat tautan streaming video tersebut dan memunculkan tombol unduhan di sini."
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMediaStreams"
         android:layout_width="match_parent"

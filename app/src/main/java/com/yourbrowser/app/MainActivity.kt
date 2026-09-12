@@ -10,6 +10,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.mozilla.geckoview.GeckoSession
 import java.io.File
+import java.net.URLDecoder
 
 class MainActivity : AppCompatActivity() {
 
@@ -76,6 +78,10 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnGo.setOnClickListener {
             navigateUrl()
+        }
+
+        binding.btnToolbarDownload.setOnClickListener {
+            showMediaGrabberBottomSheet()
         }
 
         binding.etUrl.setOnEditorActionListener { _, _, _ ->
@@ -168,15 +174,33 @@ class MainActivity : AppCompatActivity() {
 
         val newSession = geckoEngine.createSession(isPrivate = true)
 
-        // Delegate listener untuk history back navigation
+        // Delegate listener untuk history back navigation dan media sniffer
         newSession.navigationDelegate = object : GeckoSession.NavigationDelegate {
             override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) {
                 canSessionGoBack = canGoBack
             }
             override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) {}
             override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.AllowOrDeny>? {
-                mediaSniffer.inspectNetworkResponse(url = request.uri, mimeType = null)
+                val uri = request.uri
+                if (uri.startsWith(GeckoViewEngine.SCHEME_MEDIA_HOOK)) {
+                    val encodedMediaUrl = uri.removePrefix(GeckoViewEngine.SCHEME_MEDIA_HOOK)
+                    try {
+                        val realMediaUrl = URLDecoder.decode(encodedMediaUrl, "UTF-8")
+                        mediaSniffer.inspectNetworkResponse(url = realMediaUrl, mimeType = null)
+                    } catch (_: Exception) {}
+                    return org.mozilla.geckoview.GeckoResult.fromValue(org.mozilla.geckoview.AllowOrDeny.DENY)
+                }
+
+                mediaSniffer.inspectNetworkResponse(url = uri, mimeType = null)
                 return org.mozilla.geckoview.GeckoResult.fromValue(org.mozilla.geckoview.AllowOrDeny.ALLOW)
+            }
+        }
+
+        newSession.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onPageStop(session: GeckoSession, success: Boolean) {
+                if (success) {
+                    geckoEngine.injectSnifferScript(session)
+                }
             }
         }
 
@@ -194,7 +218,7 @@ class MainActivity : AppCompatActivity() {
                     binding.fabDownload.visibility = View.GONE
                 } else {
                     binding.fabDownload.visibility = View.VISIBLE
-                    binding.fabDownload.text = "⚡ Unduh (${streams.size})"
+                    binding.fabDownload.text = "⚡ Unduh Video (${streams.size})"
                 }
             }
         }
@@ -206,12 +230,21 @@ class MainActivity : AppCompatActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.bottomsheet_media_grabber, null)
 
         val tvTitle = view.findViewById<TextView>(R.id.tvSheetTitle)
+        val tvEmptyGuide = view.findViewById<TextView>(R.id.tvEmptyMediaGuide)
         val rvStreams = view.findViewById<RecyclerView>(R.id.rvMediaStreams)
         val pbDownload = view.findViewById<ProgressBar>(R.id.pbDownloadProgress)
         val tvStatus = view.findViewById<TextView>(R.id.tvDownloadStatus)
         val btnExport = view.findViewById<Button>(R.id.btnExportGallery)
 
         tvTitle.text = getString(R.string.detected_videos, streams.size)
+
+        if (streams.isEmpty()) {
+            tvEmptyGuide.visibility = View.VISIBLE
+            rvStreams.visibility = View.GONE
+        } else {
+            tvEmptyGuide.visibility = View.GONE
+            rvStreams.visibility = View.VISIBLE
+        }
 
         var lastDownloadedFile: File? = null
 

@@ -54,6 +54,18 @@
             android:text="@string/btn_go"
             android:textColor="@color/primary_dark"
             android:textSize="13sp" />
+
+        <!-- Tombol Download Permanen di Toolbar Atas -->
+        <ImageButton
+            android:id="@+id/btnToolbarDownload"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/badge_vault"
+            android:contentDescription="Fitur Download Video"
+            android:padding="8dp"
+            android:src="@android:drawable/stat_sys_download"
+            app:tint="@color/accent" />
     </LinearLayout>
 
     <!-- GeckoView Engine Container -->
@@ -66,16 +78,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/topBar" />
 
-    <!-- Floating Video Sniffer Badge Button -->
+    <!-- Floating Video Sniffer Badge Button (Muncul otomatis saat video terdeteksi) -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabDownload"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:text="⚡ Unduh (0)"
+        android:text="⚡ Unduh Video (0)"
         android:textColor="@color/primary_dark"
         android:visibility="gone"
         app:backgroundTint="@color/accent"
+        app:icon="@android:drawable/stat_sys_download"
+        app:iconTint="@color/primary_dark"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
