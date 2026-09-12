@@ -1,8 +1,11 @@
 package com.yourbrowser.app
 
 import android.app.PictureInPictureParams
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.media.PlaybackParams
@@ -14,6 +17,8 @@ import android.os.Looper
 import android.util.Rational
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.SeekBar
 import android.widget.Toast
@@ -21,7 +26,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.yourbrowser.app.databinding.ActivityNativePlayerBinding
 import com.yourbrowser.feature.downloader.cache.LocalStreamingProxy
-import com.yourbrowser.feature.downloader.cache.MediaCacheManager
 import com.yourbrowser.feature.downloader.model.DetectedMediaStream
 import com.yourbrowser.feature.downloader.model.DownloadState
 import com.yourbrowser.feature.downloader.model.StreamFormat
@@ -56,6 +60,18 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
     private var initialVolume = 0
     private var maxVolume = 1
     private var initialBrightness = 0.5f
+
+    // Protection receiver when headphones are unplugged
+    private val becomingNoisyReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
+                if (binding.videoView.isPlaying) {
+                    togglePlayPause()
+                    Toast.makeText(this@NativeVideoPlayerActivity, "Headset terputus, video dijeda", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     companion object {
         const val EXTRA_MEDIA_URL = "extra_media_url"
@@ -99,11 +115,56 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
 
+        applyImmersiveFullscreen()
         parseIntentExtras()
         initViews()
         initPlayback()
         setupGestureDetector()
         observeActiveDownload()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+        registerReceiver(becomingNoisyReceiver, filter)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        try {
+            unregisterReceiver(becomingNoisyReceiver)
+        } catch (_: Exception) {}
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            applyImmersiveFullscreen()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applyImmersiveFullscreen()
+    }
+
+    private fun applyImmersiveFullscreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.let { controller ->
+                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        }
     }
 
     private fun parseIntentExtras() {
@@ -114,13 +175,16 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
         vaultStorageDirPath = intent.getStringExtra(EXTRA_VAULT_DIR)
         isLocalFile = intent.getBooleanExtra(EXTRA_IS_LOCAL_FILE, false)
 
-        val finalUrl = if (isLocalFile) {
+        if (isLocalFile) {
             val localFile = File(streamUrl)
-            LocalStreamingProxy.instance.getStreamUrlForFile(localFile)
+            videoUri = if (localFile.exists()) {
+                Uri.fromFile(localFile)
+            } else {
+                Uri.parse(LocalStreamingProxy.instance.getStreamUrlForFile(localFile))
+            }
         } else {
-            streamUrl
+            videoUri = Uri.parse(streamUrl)
         }
-        videoUri = Uri.parse(finalUrl)
     }
 
     private fun initViews() {
@@ -145,6 +209,10 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
 
         binding.btnPlayerSpeed.setOnClickListener {
             cyclePlaybackSpeed()
+        }
+
+        binding.btnPlayerOrientation.setOnClickListener {
+            toggleScreenOrientation()
         }
 
         binding.btnPlayerPip.setOnClickListener {
@@ -183,6 +251,16 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
                 scheduleAutoHideControls()
             }
         })
+    }
+
+    private fun toggleScreenOrientation() {
+        val currentOrientation = resources.configuration.orientation
+        requestedOrientation = if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+        applyImmersiveFullscreen()
     }
 
     private fun initPlayback() {
@@ -338,7 +416,7 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
     // GESTURE CONTROLS (VOLUME, BRIGHTNESS, SEEK HUD)
     // =========================================================================
     private fun setupGestureDetector() {
-        binding.viewGestureTouch.setOnTouchListener { _, event ->
+        val gestureTouchListener = View.OnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     touchStartX = event.x
@@ -352,12 +430,12 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
                     val deltaY = event.y - touchStartY
 
                     if (abs(deltaY) > abs(deltaX) && abs(deltaY) > 20) {
-                        val viewWidth = binding.viewGestureTouch.width
+                        val viewWidth = binding.root.width
                         val isLeftSide = touchStartX < viewWidth / 2
 
                         if (isLeftSide) {
                             // Gesture Brightness Control (Left side vertical drag)
-                            val percentDelta = -deltaY / binding.viewGestureTouch.height
+                            val percentDelta = -deltaY / binding.root.height.coerceAtLeast(1)
                             val newBrightness = (initialBrightness + percentDelta).coerceIn(0.01f, 1.0f)
                             val lp = window.attributes
                             lp.screenBrightness = newBrightness
@@ -369,7 +447,7 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
                             )
                         } else {
                             // Gesture Volume Control (Right side vertical drag)
-                            val percentDelta = -deltaY / binding.viewGestureTouch.height
+                            val percentDelta = -deltaY / binding.root.height.coerceAtLeast(1)
                             val volumeDelta = (percentDelta * maxVolume).toInt()
                             val newVolume = (initialVolume + volumeDelta).coerceIn(0, maxVolume)
                             audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVolume, 0)
@@ -395,6 +473,18 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
                 else -> false
             }
         }
+
+        binding.viewGestureTouch.setOnTouchListener(gestureTouchListener)
+
+        // Make background of layoutControls toggle controls on tap
+        binding.layoutControls.setOnClickListener {
+            toggleControlsVisibility()
+        }
+
+        // Prevent toolbar clicks from accidentally hiding controls
+        binding.layoutTopControls.setOnClickListener { scheduleAutoHideControls() }
+        binding.layoutBottomControls.setOnClickListener { scheduleAutoHideControls() }
+        binding.layoutCenterControls.setOnClickListener { scheduleAutoHideControls() }
     }
 
     private fun showGestureHud(iconRes: Int, text: String) {
@@ -486,6 +576,7 @@ class NativeVideoPlayerActivity : AppCompatActivity() {
             hideControls()
         } else {
             showControls()
+            applyImmersiveFullscreen()
         }
     }
 

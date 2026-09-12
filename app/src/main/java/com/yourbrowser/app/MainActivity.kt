@@ -10,9 +10,12 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
@@ -225,6 +228,8 @@ class MainActivity : AppCompatActivity() {
 
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
+        val originalTypeface = etPassword.typeface
+
         btnToggle.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
             if (isPasswordVisible) {
@@ -234,7 +239,19 @@ class MainActivity : AppCompatActivity() {
                 etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                 btnToggle.setImageResource(R.drawable.ic_visibility)
             }
+            etPassword.typeface = originalTypeface
             etPassword.setSelection(etPassword.text.length)
+        }
+
+        etPassword.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_DONE ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            ) {
+                btnUnlock.performClick()
+                true
+            } else {
+                false
+            }
         }
 
         etPassword.addTextChangedListener(object : TextWatcher {
@@ -273,6 +290,12 @@ class MainActivity : AppCompatActivity() {
             val session = vaultManager.unlockVault(passChars)
             onVaultUnlocked(session)
             dialog.dismiss()
+        }
+
+        dialog.setOnShowListener {
+            etPassword.requestFocus()
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.showSoftInput(etPassword, InputMethodManager.SHOW_IMPLICIT)
         }
 
         dialog.show()

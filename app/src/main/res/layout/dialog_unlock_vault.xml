@@ -226,8 +226,10 @@
                         android:layout_weight="1"
                         android:background="@null"
                         android:hint="@string/password_hint"
+                        android:imeOptions="actionDone"
                         android:inputType="textPassword"
                         android:letterSpacing="0.1"
+                        android:singleLine="true"
                         android:textColor="@color/text_primary"
                         android:textColorHint="@color/text_disabled"
                         android:textSize="13sp" />

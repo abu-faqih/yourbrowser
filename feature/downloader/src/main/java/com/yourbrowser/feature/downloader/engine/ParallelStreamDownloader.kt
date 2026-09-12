@@ -104,8 +104,8 @@ class ParallelStreamDownloader(
             if (!response.isSuccessful) throw IllegalStateException("HTTP ${response.code}: ${response.message}")
             val body = response.body ?: throw IllegalStateException("Empty response body")
             val contentLength = body.contentLength()
-
-            val progressiveUrl = LocalStreamingProxy.instance.getStreamUrlForFile(destinationFile)
+            val totalLength = if (contentLength > 0) contentLength else stream.sizeBytes
+            val progressiveUrl = LocalStreamingProxy.instance.getStreamUrlForFile(destinationFile, totalLength)
             activeProgressiveUrl = progressiveUrl
 
             val buffer = ByteArray(16384)

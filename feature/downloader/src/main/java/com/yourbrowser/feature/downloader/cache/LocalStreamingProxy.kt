@@ -10,20 +10,29 @@ import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.URLDecoder
-import java.net.URLEncoder
+import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
+
+data class StreamMount(
+    val directoryOrFile: File,
+    val totalSizeBytes: Long = 0L
+)
 
 /**
  * Loopback HTTP Streaming Server (127.0.0.1).
  * Melayani berkas lokal, playlist HLS dinamis (.m3u8), dan HTTP Range Request (206 Partial Content)
  * untuk mendukung pemutaran progresif video langsung ke Android MediaPlayer (Play-While-Downloading).
+ * Menggunakan token RESTful mount (/stream/<token>/<file>) agar resolusi segmen relatif HLS RFC 3986
+ * bekerja 100% tanpa kegagalan 404.
  */
 class LocalStreamingProxy private constructor() {
 
     private var serverSocket: ServerSocket? = null
     private val threadPool = Executors.newCachedThreadPool()
     private val isRunning = AtomicBoolean(false)
+    private val mountedStreams = ConcurrentHashMap<String, StreamMount>()
 
     var serverPort: Int = 0
         private set
@@ -78,15 +87,24 @@ class LocalStreamingProxy private constructor() {
         } catch (_: Exception) {}
         serverSocket = null
         serverPort = 0
+        mountedStreams.clear()
     }
 
     /**
-     * Menghasilkan URL streaming loopback lokal untuk suatu file media atau manifest m3u8.
+     * Mendaftarkan file atau direktori streaming dan menghasilkan URL RESTful standar.
+     * Segmen relatif seperti 'seg_0.ts' pada manifest HLS akan otomatis teresolusi ke direktori yang sama.
      */
-    fun getStreamUrlForFile(file: File): String {
+    fun getStreamUrlForFile(fileOrDir: File, totalSizeBytes: Long = 0L): String {
         start()
-        val encodedPath = URLEncoder.encode(file.absolutePath, "UTF-8")
-        return "http://127.0.0.1:$serverPort/file?path=$encodedPath"
+        val mountTarget = if (fileOrDir.isDirectory) fileOrDir else fileOrDir.parentFile ?: fileOrDir
+        val token = MessageDigest.getInstance("SHA-256")
+            .digest(mountTarget.absolutePath.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+            .take(12)
+
+        mountedStreams[token] = StreamMount(mountTarget, totalSizeBytes)
+        val fileName = fileOrDir.name
+        return "http://127.0.0.1:$serverPort/stream/$token/$fileName"
     }
 
     private fun handleClient(client: Socket) {
@@ -114,6 +132,35 @@ class LocalStreamingProxy private constructor() {
                 line = reader.readLine()
             }
 
+            // Endpoint 1: RESTful Stream Routing (/stream/<token>/<filename>)
+            if (uri.startsWith("/stream/")) {
+                val subPath = uri.removePrefix("/stream/").substringBefore("?")
+                val token = subPath.substringBefore("/")
+                val requestedFileName = subPath.substringAfter("/", "")
+                val mount = mountedStreams[token]
+
+                if (mount != null && requestedFileName.isNotEmpty()) {
+                    val targetFile = if (mount.directoryOrFile.isDirectory) {
+                        File(mount.directoryOrFile, requestedFileName)
+                    } else {
+                        File(mount.directoryOrFile.parentFile, requestedFileName)
+                    }
+
+                    // Polling tunggu segmen jika sedang aktif diunduh di latar belakang
+                    var waitAttempts = 0
+                    while ((!targetFile.exists() || targetFile.length() == 0L) && waitAttempts < 30) {
+                        Thread.sleep(100)
+                        waitAttempts++
+                    }
+
+                    if (targetFile.exists()) {
+                        serveLocalFile(targetFile, method, rangeHeader, out, mount.totalSizeBytes)
+                        return
+                    }
+                }
+            }
+
+            // Endpoint 2: Fallback query parameter (/file?path=...)
             if (uri.startsWith("/file")) {
                 val query = uri.substringAfter("?", "")
                 val pathParam = query.split("&").find { it.startsWith("path=") }?.substringAfter("path=")
@@ -121,7 +168,7 @@ class LocalStreamingProxy private constructor() {
                     val decodedPath = URLDecoder.decode(pathParam, "UTF-8")
                     val file = File(decodedPath)
                     if (file.exists() && file.isFile) {
-                        serveLocalFile(file, method, rangeHeader, out)
+                        serveLocalFile(file, method, rangeHeader, out, 0L)
                         return
                     }
                 }
@@ -135,12 +182,19 @@ class LocalStreamingProxy private constructor() {
         }
     }
 
-    private fun serveLocalFile(file: File, method: String, rangeHeader: String?, out: OutputStream) {
-        val fileLength = file.length()
+    private fun serveLocalFile(
+        file: File,
+        method: String,
+        rangeHeader: String?,
+        out: OutputStream,
+        totalSizeBytes: Long = 0L
+    ) {
+        val currentFileLength = file.length()
+        val effectiveTotalLength = if (totalSizeBytes > 0) totalSizeBytes else currentFileLength
         val mimeType = getMimeType(file.name)
 
         var startOffset = 0L
-        var endOffset = fileLength - 1
+        var endOffset = currentFileLength - 1
         var isPartial = false
 
         if (!rangeHeader.isNullOrBlank() && rangeHeader.startsWith("bytes=")) {
@@ -153,8 +207,8 @@ class LocalStreamingProxy private constructor() {
                 if (rangeParts.size > 1 && rangeParts[1].isNotEmpty()) {
                     endOffset = rangeParts[1].toLong()
                 }
-                if (endOffset >= fileLength) {
-                    endOffset = fileLength - 1
+                if (endOffset >= currentFileLength) {
+                    endOffset = currentFileLength - 1
                 }
                 if (startOffset <= endOffset) {
                     isPartial = true
@@ -162,12 +216,12 @@ class LocalStreamingProxy private constructor() {
             } catch (_: Exception) {}
         }
 
-        val contentLen = if (fileLength > 0) (endOffset - startOffset + 1).coerceAtLeast(0L) else 0L
+        val contentLen = if (currentFileLength > 0) (endOffset - startOffset + 1).coerceAtLeast(0L) else 0L
 
         val headerBuilder = StringBuilder()
         if (isPartial) {
             headerBuilder.append("HTTP/1.1 206 Partial Content\r\n")
-            headerBuilder.append("Content-Range: bytes $startOffset-$endOffset/$fileLength\r\n")
+            headerBuilder.append("Content-Range: bytes $startOffset-$endOffset/$effectiveTotalLength\r\n")
         } else {
             headerBuilder.append("HTTP/1.1 200 OK\r\n")
         }
