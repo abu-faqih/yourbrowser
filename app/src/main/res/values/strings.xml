@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">YourBrowser</string>
+    <string name="url_hint">Ketik URL atau cari...</string>
+    <string name="btn_go">Buka</string>
+    <string name="vault_locked">Sesi Terkunci</string>
+    <string name="vault_unlocked">Vault Aktif: %1$s</string>
+    <string name="enter_vault_password">Masukkan Kata Sandi Vault</string>
+    <string name="password_hint">Kata sandi incognito...</string>
+    <string name="btn_unlock">Buka Sesi</string>
+    <string name="btn_lock">Kunci Sesi</string>
+    <string name="detected_videos">Media Terdeteksi (%1$d)</string>
+    <string name="download_now">Unduh</string>
+    <string name="no_media_detected">Belum ada video terdeteksi pada halaman ini.</string>
+    <string name="downloading">Mengunduh: %1$d%% (%2$s/s)</string>
+    <string name="download_completed">Unduhan Selesai: %1$s</string>
+</resources>

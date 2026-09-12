@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml:2:13-83
+INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml:2:13-83
+	package
+		INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml
+	xmlns:android
+		ADDED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml:2:23-81
+uses-sdk
+INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml reason: use-sdk injection requested
+INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml
+INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml
+	android:targetSdkVersion
+		INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml
+	android:minSdkVersion
+		INJECTED from /mnt/data/aplikasi/yourbrowser/feature/downloader/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest17631131849662091061.xml
