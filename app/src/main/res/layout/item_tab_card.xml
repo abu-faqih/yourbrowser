@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:background="@drawable/bg_card_obsidian"
+    android:orientation="vertical">
+
+    <!-- Card Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:background="@drawable/bg_card_container_low"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="8dp">
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:contentDescription="Tab Icon"
+            android:src="@drawable/ic_play"
+            app:tint="@color/accent_sniffer" />
+
+        <TextView
+            android:id="@+id/tvTabTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="Tab Workspace"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp" />
+
+        <ImageButton
+            android:id="@+id/btnCloseTab"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Tutup Tab"
+            android:padding="4dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/text_secondary" />
+    </LinearLayout>
+
+    <!-- Thumbnail Preview Box -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@color/surface_container_lowest">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:contentDescription="Web preview"
+            android:src="@drawable/ic_home"
+            app:tint="@color/surface_container_highest" />
+
+        <TextView
+            android:id="@+id/tvTabBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_pill_shield"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:text="ENCRYPTED"
+            android:textColor="@color/accent_secure"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <!-- Card Footer URL -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="28dp"
+        android:background="@drawable/bg_card_container_low"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="8dp">
+
+        <TextView
+            android:id="@+id/tvTabUrl"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="middle"
+            android:fontFamily="monospace"
+            android:maxLines="1"
+            android:text="duckduckgo.com"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/tvTabActiveStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_pill_sniffer"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="1dp"
+            android:text="ACTIVE"
+            android:textColor="@color/accent_sniffer"
+            android:textSize="8sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>

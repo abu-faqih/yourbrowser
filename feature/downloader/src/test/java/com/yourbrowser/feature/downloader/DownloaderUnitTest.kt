@@ -78,4 +78,68 @@ class DownloaderUnitTest {
         assertEquals("https://cdn.example.com/hls/segment_0.ts", mediaPlaylist.segmentUrls[0])
         assertEquals("https://cdn.example.com/hls/segment_1.ts", mediaPlaylist.segmentUrls[1])
     }
+
+    @Test
+    fun testMediaCacheManagerStoreAndAdopt() {
+        val tempRoot = java.io.File(System.getProperty("java.io.tmpdir"), "yb_test_cache_${System.currentTimeMillis()}").apply { mkdirs() }
+        val targetDownloadDir = java.io.File(tempRoot, "downloads").apply { mkdirs() }
+
+        try {
+            val cacheManager = com.yourbrowser.feature.downloader.cache.MediaCacheManager(tempRoot)
+            val streamUrl = "https://cdn.example.com/hls/test_stream.m3u8"
+
+            // Simpan segmen 0 dan 1 yang diputar oleh video player
+            cacheManager.storeSegment(streamUrl, 0, byteArrayOf(0x47, 0x01, 0x02))
+            cacheManager.storeSegment(streamUrl, 1, byteArrayOf(0x47, 0x03, 0x04))
+
+            // Periksa segment exists
+            assertNotNull(cacheManager.getCachedSegment(streamUrl, 0))
+            assertNotNull(cacheManager.getCachedSegment(streamUrl, 1))
+            assertNull(cacheManager.getCachedSegment(streamUrl, 2))
+
+            // Adopsi cache ke folder unduhan
+            val adopted = cacheManager.adoptCacheForDownload(streamUrl, targetDownloadDir)
+            assertEquals(setOf(0, 1), adopted)
+
+            // Pastikan file segmen ada di folder download tanpa perlu fetch ulang
+            assertTrue(java.io.File(targetDownloadDir, "seg_0.ts").exists())
+            assertTrue(java.io.File(targetDownloadDir, "seg_1.ts").exists())
+        } finally {
+            tempRoot.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun testLocalPlaylistGenerator() {
+        val tempDir = java.io.File(System.getProperty("java.io.tmpdir"), "yb_test_m3u8_${System.currentTimeMillis()}").apply { mkdirs() }
+        try {
+            val seg0 = java.io.File(tempDir, "seg_0.ts").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+            val seg1 = java.io.File(tempDir, "seg_1.ts").apply { writeBytes(byteArrayOf(4, 5, 6)) }
+
+            // 1. Test live playlist while downloading (ongoing event)
+            val liveManifest = com.yourbrowser.feature.downloader.player.LocalPlaylistGenerator.updateLocalManifest(
+                targetDir = tempDir,
+                downloadedSegments = listOf(seg0, seg1),
+                targetDurationSec = 10,
+                isCompleted = false
+            )
+            val liveContent = liveManifest.readText()
+            assertTrue("Must contain EVENT playlist type", liveContent.contains("#EXT-X-PLAYLIST-TYPE:EVENT"))
+            assertFalse("Must NOT contain ENDLIST while downloading", liveContent.contains("#EXT-X-ENDLIST"))
+            assertTrue("Must reference seg_0.ts", liveContent.contains("seg_0.ts"))
+            assertTrue("Must reference seg_1.ts", liveContent.contains("seg_1.ts"))
+
+            // 2. Test completed playlist
+            val completedManifest = com.yourbrowser.feature.downloader.player.LocalPlaylistGenerator.updateLocalManifest(
+                targetDir = tempDir,
+                downloadedSegments = listOf(seg0, seg1),
+                targetDurationSec = 10,
+                isCompleted = true
+            )
+            val completedContent = completedManifest.readText()
+            assertTrue("Must contain ENDLIST upon completion", completedContent.contains("#EXT-X-ENDLIST"))
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
 }

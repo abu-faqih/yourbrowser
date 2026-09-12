@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/flPlayerRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05080E"
+    android:keepScreenOn="true">
+
+    <!-- Native Video View Canvas -->
+    <VideoView
+        android:id="@+id/videoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <!-- Buffering Spinner -->
+    <ProgressBar
+        android:id="@+id/pbBuffering"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/accent_sniffer"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <!-- Gesture HUD Feedback Indicator (Volume, Brightness, Seek) -->
+    <LinearLayout
+        android:id="@+id/layoutGestureFeedback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_card_obsidian"
+        android:elevation="12dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/ivGestureIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="Gesture icon"
+            android:src="@drawable/ic_volume_up"
+            app:tint="@color/accent_sniffer" />
+
+        <TextView
+            android:id="@+id/tvGestureText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="monospace"
+            android:text="Volume: 80%"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Transparent Touch Interceptor for Gestures -->
+    <View
+        android:id="@+id/viewGestureTouch"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Fullscreen Player Controls Overlay -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutControls"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#66000000">
+
+        <!-- Top Header Bar -->
+        <LinearLayout
+            android:id="@+id/layoutTopControls"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:background="#CC0A0E17"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/btnPlayerBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Kembali"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/text_primary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvPlayerTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="middle"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:text="Video Player"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvPlayerSubInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="UC-Engine • Shared Cache Active"
+                    android:textColor="@color/accent_sniffer"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <!-- PiP Button -->
+            <ImageButton
+                android:id="@+id/btnPlayerPip"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_pill_shield"
+                android:contentDescription="Picture-in-Picture"
+                android:padding="8dp"
+                android:src="@drawable/ic_picture_in_picture"
+                app:tint="@color/accent_sniffer" />
+
+            <!-- Integrated Direct Download Button (UC Browser Hallmark) -->
+            <Button
+                android:id="@+id/btnPlayerDownload"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:backgroundTint="@color/accent_sniffer"
+                android:elevation="4dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Unduh"
+                android:textColor="@color/surface_ground"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                app:icon="@drawable/ic_bolt"
+                app:iconGravity="textStart"
+                app:iconSize="16dp"
+                app:iconTint="@color/surface_ground" />
+        </LinearLayout>
+
+        <!-- Live Download In-Player Status Banner -->
+        <TextView
+            android:id="@+id/tvPlayerDownloadStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_pill_sniffer"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:text="Mengunduh di latar belakang: 45% (Tanpa Unduh Ulang)"
+            android:textColor="@color/accent_sniffer"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layoutTopControls"
+            tools:visibility="visible" />
+
+        <!-- Center Controls: Rewind 10, Play/Pause, Forward 10 -->
+        <LinearLayout
+            android:id="@+id/layoutCenterControls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toTopOf="@id/layoutBottomControls"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/layoutTopControls">
+
+            <ImageButton
+                android:id="@+id/btnPlayerRewind"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="28dp"
+                android:background="@drawable/bg_pill_shield"
+                android:contentDescription="Mundur 10 detik"
+                android:padding="10dp"
+                android:src="@drawable/ic_replay_10"
+                app:tint="@color/text_primary" />
+
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_badge_accent">
+
+                <ImageButton
+                    android:id="@+id/btnPlayerPlayPause"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Putar / Jeda"
+                    android:padding="14dp"
+                    android:src="@drawable/ic_pause"
+                    app:tint="@color/surface_ground" />
+            </FrameLayout>
+
+            <ImageButton
+                android:id="@+id/btnPlayerForward"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="28dp"
+                android:background="@drawable/bg_pill_shield"
+                android:contentDescription="Maju 10 detik"
+                android:padding="10dp"
+                android:src="@drawable/ic_forward_10"
+                app:tint="@color/text_primary" />
+        </LinearLayout>
+
+        <!-- Bottom Timeline & Control Bar -->
+        <LinearLayout
+            android:id="@+id/layoutBottomControls"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:background="#CC0A0E17"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <TextView
+                android:id="@+id/tvPlayerCurrentTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="00:00"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <SeekBar
+                android:id="@+id/sbPlayerProgress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:layout_weight="1"
+                android:max="1000"
+                android:progress="0"
+                android:progressTint="@color/accent_sniffer"
+                android:thumbTint="@color/accent_sniffer" />
+
+            <TextView
+                android:id="@+id/tvPlayerTotalTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="monospace"
+                android:text="00:00"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnPlayerSpeed"
+                style="?attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:fontFamily="monospace"
+                android:minWidth="44dp"
+                android:paddingHorizontal="6dp"
+                android:text="1.0x"
+                android:textColor="@color/accent_sniffer"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

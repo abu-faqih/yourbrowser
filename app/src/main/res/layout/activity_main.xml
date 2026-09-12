@@ -1,96 +1,364 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_dark">
+    android:background="@color/surface_ground">
 
-    <!-- Top Toolbar / Omnibox -->
+    <!-- Top Workspace Header Bar -->
     <LinearLayout
-        android:id="@+id/topBar"
+        android:id="@+id/topHeaderBar"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@color/surface_dark"
-        android:elevation="4dp"
+        android:layout_height="48dp"
+        android:background="@color/surface_card"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp"
+        android:paddingHorizontal="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <ImageView
+            android:id="@+id/ivSecurityEmblem"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="Security Emblem"
+            android:src="@drawable/ic_shield"
+            app:tint="@color/accent_sniffer" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/browser_workspace"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.08"
+                android:text="@string/stealth_engine"
+                android:textColor="@color/accent_sniffer"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnQuickProfile"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_pill_shield"
+            android:contentDescription="Vault Profile"
+            android:padding="6dp"
+            android:src="@drawable/ic_lock"
+            app:tint="@color/accent_sniffer" />
+    </LinearLayout>
+
+    <!-- Omnibox Toolbar Bar -->
+    <LinearLayout
+        android:id="@+id/omniboxBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/surface_card"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topHeaderBar">
+
+        <!-- Vault Indicator Pill -->
         <TextView
             android:id="@+id/tvVaultIndicator"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="32dp"
             android:background="@drawable/badge_vault"
+            android:gravity="center"
             android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
             android:text="🔒 Vault"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp" />
+            android:textColor="@color/accent_secure"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/etUrl"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:background="@color/primary"
-            android:hint="@string/url_hint"
-            android:imeOptions="actionGo"
-            android:inputType="textUri"
-            android:maxLines="1"
-            android:paddingHorizontal="12dp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_secondary"
-            android:textSize="14sp" />
-
-        <Button
-            android:id="@+id/btnGo"
+        <!-- Tracker Shield Pill -->
+        <LinearLayout
+            android:id="@+id/layoutShieldIndicator"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="32dp"
             android:layout_marginStart="6dp"
-            android:text="@string/btn_go"
-            android:textColor="@color/primary_dark"
-            android:textSize="13sp" />
+            android:background="@drawable/bg_pill_shield"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp">
 
-        <!-- Tombol Download Permanen di Toolbar Atas -->
-        <ImageButton
-            android:id="@+id/btnToolbarDownload"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="Shield"
+                android:src="@drawable/ic_shield"
+                app:tint="@color/accent_secure" />
+
+            <TextView
+                android:id="@+id/tvShieldCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="14"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Omnibox URL Input Bar -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="36dp"
             android:layout_marginStart="6dp"
-            android:background="@drawable/badge_vault"
-            android:contentDescription="Fitur Download Video"
-            android:padding="8dp"
-            android:src="@android:drawable/stat_sys_download"
-            app:tint="@color/accent" />
+            android:layout_weight="1"
+            android:background="@drawable/bg_omnibox"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:contentDescription="HTTPS"
+                android:src="@drawable/ic_lock"
+                app:tint="@color/accent_secure" />
+
+            <EditText
+                android:id="@+id/etUrl"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="6dp"
+                android:background="@null"
+                android:hint="@string/url_hint"
+                android:imeOptions="actionGo"
+                android:inputType="textUri"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_disabled"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnRefresh"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/bg_pill_shield"
+            android:contentDescription="Refresh"
+            android:padding="6dp"
+            android:src="@drawable/ic_refresh"
+            app:tint="@color/text_secondary" />
+
+        <ImageButton
+            android:id="@+id/btnToolbarMore"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/bg_pill_shield"
+            android:contentDescription="Menu"
+            android:padding="6dp"
+            android:src="@drawable/ic_more_vert"
+            app:tint="@color/text_secondary" />
     </LinearLayout>
 
-    <!-- GeckoView Engine Container -->
+    <!-- Slim Glowing Neon Loading Progress Bar -->
+    <ProgressBar
+        android:id="@+id/pbPageLoad"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:indeterminate="false"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="@color/accent_sniffer"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/omniboxBar" />
+
+    <!-- GeckoView Engine Container (Main Viewport) -->
     <org.mozilla.geckoview.GeckoView
         android:id="@+id/geckoView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/topBar" />
+        app:layout_constraintTop_toBottomOf="@id/pbPageLoad" />
 
-    <!-- Floating Video Sniffer Badge Button (Muncul otomatis saat video terdeteksi) -->
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-        android:id="@+id/fabDownload"
+    <!-- Reactive Sniffer Floating Container -->
+    <LinearLayout
+        android:id="@+id/layoutSnifferFabContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="⚡ Unduh Video (0)"
-        android:textColor="@color/primary_dark"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:gravity="end"
+        android:orientation="vertical"
         android:visibility="gone"
-        app:backgroundTint="@color/accent"
-        app:icon="@android:drawable/stat_sys_download"
-        app:iconTint="@color/primary_dark"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="visible">
+
+        <!-- Glowing Status Bubble -->
+        <TextView
+            android:id="@+id/tvSnifferBubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_pill_sniffer"
+            android:drawableStart="@drawable/ic_bolt"
+            android:drawablePadding="4dp"
+            android:drawableTint="@color/accent_sniffer"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="@string/hls_stream_captured"
+            android:textColor="@color/accent_sniffer"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- Floating Grabber Pill Button -->
+        <LinearLayout
+            android:id="@+id/fabDownload"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_fab_sniffer"
+            android:clickable="true"
+            android:elevation="6dp"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="Bolt"
+                android:src="@drawable/ic_bolt"
+                app:tint="@color/surface_ground" />
+
+            <TextView
+                android:id="@+id/tvFabDownloadText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Unduh Video (1)"
+                android:textColor="@color/surface_ground"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Ergonomic Bottom Navigation Bar (Thumb Zone) -->
+    <LinearLayout
+        android:id="@+id/bottomNavBar"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_bottom_nav"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Back Button -->
+        <ImageButton
+            android:id="@+id/btnNavBack"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Kembali"
+            android:padding="16dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/text_secondary" />
+
+        <!-- Forward Button -->
+        <ImageButton
+            android:id="@+id/btnNavForward"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Maju"
+            android:padding="16dp"
+            android:src="@drawable/ic_arrow_forward"
+            app:tint="@color/text_secondary" />
+
+        <!-- Home Button -->
+        <ImageButton
+            android:id="@+id/btnNavHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Beranda"
+            android:padding="16dp"
+            android:src="@drawable/ic_home"
+            app:tint="@color/accent_sniffer" />
+
+        <!-- Tab Manager Button with Badge Counter -->
+        <FrameLayout
+            android:id="@+id/btnNavTabs"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/tvTabCounter"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:background="@drawable/bg_pill_shield"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="@color/accent_sniffer"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+
+        <!-- Vault Media Library / Downloads Button -->
+        <ImageButton
+            android:id="@+id/btnNavDownloads"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Antrean &amp; Media Unduhan"
+            android:padding="16dp"
+            android:src="@drawable/ic_download"
+            app:tint="@color/text_secondary" />
+
+        <!-- Panic Kill-Switch Button -->
+        <ImageButton
+            android:id="@+id/btnNavPanic"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/accent_panic_bg"
+            android:contentDescription="@string/panic_kill_switch"
+            android:padding="16dp"
+            android:src="@drawable/ic_emergency_home"
+            app:tint="@color/accent_panic" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

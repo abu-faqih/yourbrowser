@@ -28,6 +28,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".NativeVideoPlayerActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden"
+            android:exported="false"
+            android:supportsPictureInPicture="true"
+            android:theme="@style/Theme.YourBrowser" />
+
         <service
             android:name="com.yourbrowser.feature.downloader.service.DownloadService"
             android:exported="false"

@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.yourbrowser.feature.downloader.cache.MediaCacheManager
 import com.yourbrowser.feature.downloader.engine.ParallelStreamDownloader
 import com.yourbrowser.feature.downloader.model.DetectedMediaStream
 import com.yourbrowser.feature.downloader.model.DownloadState
@@ -40,11 +41,20 @@ class DownloadService : Service() {
         const val EXTRA_STREAM_FORMAT = "extra_stream_format"
         const val EXTRA_STREAM_TITLE = "extra_stream_title"
         const val EXTRA_DEST_PATH = "extra_dest_path"
+        const val EXTRA_CACHE_DIR = "extra_cache_dir"
+
+        var activeDownloader: ParallelStreamDownloader? = null
+            internal set
+        var activeStream: DetectedMediaStream? = null
+            internal set
+        var activeDestFile: File? = null
+            internal set
 
         fun startDownload(
             context: Context,
             stream: DetectedMediaStream,
-            destFile: File
+            destFile: File,
+            cacheDir: File? = null
         ) {
             val intent = Intent(context, DownloadService::class.java).apply {
                 action = ACTION_START_DOWNLOAD
@@ -54,6 +64,9 @@ class DownloadService : Service() {
                 putExtra(EXTRA_STREAM_FORMAT, stream.format.name)
                 putExtra(EXTRA_STREAM_TITLE, stream.title)
                 putExtra(EXTRA_DEST_PATH, destFile.absolutePath)
+                if (cacheDir != null) {
+                    putExtra(EXTRA_CACHE_DIR, cacheDir.absolutePath)
+                }
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
@@ -61,12 +74,20 @@ class DownloadService : Service() {
                 context.startService(intent)
             }
         }
+
+        fun cancelDownload(context: Context) {
+            val intent = Intent(context, DownloadService::class.java).apply {
+                action = ACTION_CANCEL_DOWNLOAD
+            }
+            context.startService(intent)
+        }
     }
 
     override fun onCreate() {
         super.onCreate()
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         downloader = ParallelStreamDownloader()
+        activeDownloader = downloader
         createNotificationChannel()
     }
 
@@ -79,6 +100,12 @@ class DownloadService : Service() {
                 val formatStr = intent.getStringExtra(EXTRA_STREAM_FORMAT) ?: StreamFormat.DIRECT_MP4.name
                 val title = intent.getStringExtra(EXTRA_STREAM_TITLE) ?: "Video Stream"
                 val destPath = intent.getStringExtra(EXTRA_DEST_PATH) ?: return START_NOT_STICKY
+                val cacheDirPath = intent.getStringExtra(EXTRA_CACHE_DIR)
+
+                val destFile = File(destPath)
+                if (cacheDirPath != null) {
+                    downloader.cacheManager = MediaCacheManager(File(cacheDirPath))
+                }
 
                 val stream = DetectedMediaStream(
                     id = streamId,
@@ -87,6 +114,9 @@ class DownloadService : Service() {
                     format = try { StreamFormat.valueOf(formatStr) } catch (_: Exception) { StreamFormat.DIRECT_MP4 },
                     title = title
                 )
+
+                activeStream = stream
+                activeDestFile = destFile
 
                 startForeground(NOTIFICATION_ID, buildProgressNotification(title, 0, 0))
 
@@ -129,7 +159,7 @@ class DownloadService : Service() {
                         }
                     }
 
-                    downloader.download(stream, File(destPath))
+                    downloader.download(stream, destFile)
                 }
             }
 
@@ -146,6 +176,9 @@ class DownloadService : Service() {
 
     override fun onDestroy() {
         serviceScope.cancel()
+        activeDownloader = null
+        activeStream = null
+        activeDestFile = null
         super.onDestroy()
     }
 

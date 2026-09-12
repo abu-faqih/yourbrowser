@@ -28,7 +28,8 @@ sealed class DownloadState {
         val downloadedBytes: Long,
         val totalBytes: Long,
         val progressPercent: Int,
-        val speedBytesPerSec: Long
+        val speedBytesPerSec: Long,
+        val progressivePlaybackUrl: String? = null
     ) : DownloadState()
     data class Completed(val streamId: String, val localFilePath: String) : DownloadState()
     data class Failed(val streamId: String, val error: String) : DownloadState()

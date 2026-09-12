@@ -1,11 +1,39 @@
 <resources>
-    <color name="primary">#1E293B</color>
-    <color name="primary_dark">#0F172A</color>
-    <color name="accent">#38BDF8</color>
+    <!-- Stealth Obsidian Palette Tokens -->
+    <color name="surface_ground">#030712</color>
+    <color name="surface_card">#0B0F19</color>
+    <color name="surface_overlay">#111827</color>
+    <color name="surface_container_lowest">#080E1A</color>
+    <color name="surface_container_low">#161C28</color>
+    <color name="surface_container">#1A202C</color>
+    <color name="surface_container_high">#242A36</color>
+    <color name="surface_container_highest">#2F3542</color>
+    <color name="surface_bright">#343946</color>
+    <color name="surface_border">#1F2937</color>
+    <color name="outline_variant">#3D494C</color>
+
+    <!-- Accent & Tactical Signal Tokens -->
+    <color name="accent_sniffer">#06B6D4</color>
+    <color name="accent_sniffer_glow">#6606B6D4</color>
+    <color name="accent_sniffer_light">#4CD7F6</color>
+    <color name="accent_secure">#10B981</color>
+    <color name="accent_secure_dim">#00311F</color>
+    <color name="accent_panic">#EF4444</color>
+    <color name="accent_panic_bg">#26EF4444</color>
+    <color name="accent_warning">#F59E0B</color>
+
+    <!-- Text & Content Tokens -->
+    <color name="text_primary">#F9FAFB</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_tertiary">#6B7280</color>
+    <color name="text_disabled">#4B5563</color>
+
+    <!-- Backward Compatibility Aliases -->
+    <color name="primary">#4CD7F6</color>
+    <color name="primary_dark">#0B0F19</color>
+    <color name="accent">#06B6D4</color>
     <color name="vault_green">#10B981</color>
     <color name="vault_red">#EF4444</color>
-    <color name="background_dark">#0F172A</color>
-    <color name="surface_dark">#1E293B</color>
-    <color name="text_primary">#F8FAFC</color>
-    <color name="text_secondary">#94A3B8</color>
+    <color name="background_dark">#030712</color>
+    <color name="surface_dark">#0B0F19</color>
 </resources>

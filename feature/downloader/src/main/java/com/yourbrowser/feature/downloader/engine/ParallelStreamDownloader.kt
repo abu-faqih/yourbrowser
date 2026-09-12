@@ -1,10 +1,13 @@
 package com.yourbrowser.feature.downloader.engine
 
 import com.yourbrowser.core.network.NetworkClientProvider
+import com.yourbrowser.feature.downloader.cache.LocalStreamingProxy
+import com.yourbrowser.feature.downloader.cache.MediaCacheManager
 import com.yourbrowser.feature.downloader.model.DetectedMediaStream
 import com.yourbrowser.feature.downloader.model.DownloadState
 import com.yourbrowser.feature.downloader.model.StreamFormat
 import com.yourbrowser.feature.downloader.parser.HlsManifestParser
+import com.yourbrowser.feature.downloader.player.LocalPlaylistGenerator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -25,7 +28,8 @@ import java.util.concurrent.atomic.AtomicLong
 class ParallelStreamDownloader(
     private val client: OkHttpClient = NetworkClientProvider.client,
     private val hlsParser: HlsManifestParser = HlsManifestParser(),
-    private val maxConcurrentChunks: Int = 4
+    private val maxConcurrentChunks: Int = 4,
+    var cacheManager: MediaCacheManager? = null
 ) {
 
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
@@ -34,15 +38,21 @@ class ParallelStreamDownloader(
     @Volatile
     private var isCancelled = false
 
+    @Volatile
+    var activeProgressiveUrl: String? = null
+        private set
+
     fun cancel() {
         isCancelled = true
     }
 
     /**
-     * Memulai proses pengunduhan media stream ke file tujuan.
+     * Memulai proses pengunduhan media stream ke file tujuan dengan dukungan
+     * Unified Cache reuse dan Progressive Playback (Play-While-Downloading).
      */
     suspend fun download(stream: DetectedMediaStream, destinationFile: File): Unit = withContext(Dispatchers.IO) {
         isCancelled = false
+        activeProgressiveUrl = null
         _downloadState.value = DownloadState.Downloading(
             streamId = stream.id,
             downloadedBytes = 0,
@@ -95,7 +105,10 @@ class ParallelStreamDownloader(
             val body = response.body ?: throw IllegalStateException("Empty response body")
             val contentLength = body.contentLength()
 
-            val buffer = ByteArray(8192)
+            val progressiveUrl = LocalStreamingProxy.instance.getStreamUrlForFile(destinationFile)
+            activeProgressiveUrl = progressiveUrl
+
+            val buffer = ByteArray(16384)
             var bytesCopied = 0L
             val startTime = System.currentTimeMillis()
 
@@ -106,6 +119,7 @@ class ParallelStreamDownloader(
                         val bytes = input.read(buffer)
                         if (bytes < 0) break
                         output.write(buffer, 0, bytes)
+                        output.flush()
                         bytesCopied += bytes
 
                         val elapsedSec = (System.currentTimeMillis() - startTime).coerceAtLeast(1) / 1000.0
@@ -117,7 +131,8 @@ class ParallelStreamDownloader(
                             downloadedBytes = bytesCopied,
                             totalBytes = contentLength,
                             progressPercent = progressPercent,
-                            speedBytesPerSec = speed
+                            speedBytesPerSec = speed,
+                            progressivePlaybackUrl = progressiveUrl
                         )
                     }
                 }
@@ -131,7 +146,6 @@ class ParallelStreamDownloader(
         val playlist = hlsParser.parse(manifestContent, stream.url)
 
         val targetSegments = if (playlist.isMaster && playlist.variants.isNotEmpty()) {
-            // Pilih varian dengan kualitas terbaik
             val bestVariant = playlist.variants.first()
             val mediaPlaylistContent = fetchString(bestVariant.url, stream.headers)
             hlsParser.parse(mediaPlaylistContent, bestVariant.url).segmentUrls
@@ -151,12 +165,50 @@ class ParallelStreamDownloader(
         val tempDir = File(destinationFile.parentFile, "temp_${System.currentTimeMillis()}").apply { mkdirs() }
         val segmentFiles = Array<File?>(totalSegments) { null }
 
+        // ADOPT CACHED SEGMENTS FROM PLAYER BUFFER (Zero-Waste Caching)
+        val adoptedIndices = cacheManager?.adoptCacheForDownload(stream.url, tempDir) ?: emptySet()
+        for (idx in adoptedIndices) {
+            if (idx in 0 until totalSegments) {
+                val adoptedFile = File(tempDir, "seg_$idx.ts")
+                if (adoptedFile.exists() && adoptedFile.length() > 0) {
+                    segmentFiles[idx] = adoptedFile
+                    downloadedBytesCount.addAndGet(adoptedFile.length())
+                    completedSegmentsCount.incrementAndGet()
+                }
+            }
+        }
+
+        // Buat manifest awal jika sudah ada segmen dari cache
+        if (completedSegmentsCount.get() > 0) {
+            val liveManifest = LocalPlaylistGenerator.updateLocalManifest(
+                tempDir,
+                segmentFiles.filterNotNull(),
+                isCompleted = false
+            )
+            val progressiveUrl = LocalStreamingProxy.instance.getStreamUrlForFile(liveManifest)
+            activeProgressiveUrl = progressiveUrl
+            val initProgress = ((completedSegmentsCount.get() * 100) / totalSegments).toInt()
+            _downloadState.value = DownloadState.Downloading(
+                streamId = stream.id,
+                downloadedBytes = downloadedBytesCount.get(),
+                totalBytes = 0L,
+                progressPercent = initProgress,
+                speedBytesPerSec = 0L,
+                progressivePlaybackUrl = progressiveUrl
+            )
+        }
+
         val semaphore = Semaphore(maxConcurrentChunks)
 
         try {
             coroutineScope {
                 val jobs = targetSegments.mapIndexed { index, segmentUrl ->
                     async(Dispatchers.IO) {
+                        // Lewati jika segmen sudah di-cache saat ditonton sebelumnya
+                        if (segmentFiles[index] != null && segmentFiles[index]!!.exists() && segmentFiles[index]!!.length() > 0) {
+                            return@async
+                        }
+
                         semaphore.withPermit {
                             if (isCancelled) throw CancellationException("Download cancelled")
                             val segFile = File(tempDir, "seg_$index.ts")
@@ -166,6 +218,18 @@ class ParallelStreamDownloader(
                             val doneCount = completedSegmentsCount.incrementAndGet()
                             segmentFiles[index] = segFile
 
+                            // Simpan juga ke cache manager agar player bisa memanfaatkannya
+                            cacheManager?.storeSegment(stream.url, index, segFile.readBytes())
+
+                            // Update live playlist untuk play-while-downloading
+                            val liveManifest = LocalPlaylistGenerator.updateLocalManifest(
+                                tempDir,
+                                segmentFiles.filterNotNull(),
+                                isCompleted = false
+                            )
+                            val progressiveUrl = LocalStreamingProxy.instance.getStreamUrlForFile(liveManifest)
+                            activeProgressiveUrl = progressiveUrl
+
                             val elapsedSec = (System.currentTimeMillis() - startTime).coerceAtLeast(1) / 1000.0
                             val speed = (curBytes / elapsedSec).toLong()
                             val progressPercent = ((doneCount * 100) / totalSegments).toInt()
@@ -173,15 +237,23 @@ class ParallelStreamDownloader(
                             _downloadState.value = DownloadState.Downloading(
                                 streamId = stream.id,
                                 downloadedBytes = curBytes,
-                                totalBytes = 0L, // dynamic for HLS
+                                totalBytes = 0L,
                                 progressPercent = progressPercent,
-                                speedBytesPerSec = speed
+                                speedBytesPerSec = speed,
+                                progressivePlaybackUrl = progressiveUrl
                             )
                         }
                     }
                 }
                 jobs.awaitAll()
             }
+
+            // Tandai manifest lokal sebagai selesai
+            LocalPlaylistGenerator.updateLocalManifest(
+                tempDir,
+                segmentFiles.filterNotNull(),
+                isCompleted = true
+            )
 
             // Gabungkan seluruh segmen TS menjadi satu file destinationFile
             FileOutputStream(destinationFile).use { output ->

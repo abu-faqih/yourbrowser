@@ -23,6 +23,7 @@ class GeckoViewEngine(
 
     companion object {
         const val SCHEME_MEDIA_HOOK = "yourbrowser-media://"
+        const val SCHEME_PLAYER_LAUNCH = "yourbrowser-player://"
 
         // Script hook JavaScript untuk mendeteksi video play dan stream XHR/Fetch di dalam webpage
         val VIDEO_SNIFFER_JS = """
@@ -150,9 +151,13 @@ class GeckoViewEngine(
             override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? {
                 val uri = request.uri
 
-                // Cek apakah ini sinyal intersepsi media dari Content Script
-                if (uri.startsWith(SCHEME_MEDIA_HOOK)) {
-                    val encodedMediaUrl = uri.removePrefix(SCHEME_MEDIA_HOOK)
+                // Cek apakah ini sinyal intersepsi media atau peluncuran player dari Content Script
+                if (uri.startsWith(SCHEME_MEDIA_HOOK) || uri.startsWith(SCHEME_PLAYER_LAUNCH)) {
+                    val encodedMediaUrl = if (uri.startsWith(SCHEME_MEDIA_HOOK)) {
+                        uri.removePrefix(SCHEME_MEDIA_HOOK)
+                    } else {
+                        uri.removePrefix(SCHEME_PLAYER_LAUNCH)
+                    }
                     try {
                         val realMediaUrl = URLDecoder.decode(encodedMediaUrl, "UTF-8")
                         mediaSniffer.inspectNetworkResponse(url = realMediaUrl, mimeType = null)
