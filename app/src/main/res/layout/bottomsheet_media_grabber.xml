@@ -32,6 +32,17 @@
         android:textSize="12sp"
         android:visibility="gone" />
 
+    <Button
+        android:id="@+id/btnExportGallery"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/vault_green"
+        android:text="📥 Ekspor ke Galeri Publik"
+        android:textColor="@color/primary_dark"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvMediaStreams"
         android:layout_width="match_parent"

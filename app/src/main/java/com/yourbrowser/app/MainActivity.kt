@@ -1,6 +1,9 @@
 package com.yourbrowser.app
 
+import android.Manifest
 import android.app.AlertDialog
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +13,10 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,8 +24,10 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.yourbrowser.app.databinding.ActivityMainBinding
 import com.yourbrowser.core.browser.GeckoViewEngine
 import com.yourbrowser.feature.downloader.engine.ParallelStreamDownloader
+import com.yourbrowser.feature.downloader.export.MediaExporter
 import com.yourbrowser.feature.downloader.model.DetectedMediaStream
 import com.yourbrowser.feature.downloader.model.DownloadState
+import com.yourbrowser.feature.downloader.service.DownloadService
 import com.yourbrowser.feature.downloader.sniffer.MediaSniffer
 import com.yourbrowser.feature.vault.VaultSessionManager
 import kotlinx.coroutines.flow.collectLatest
@@ -35,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var downloader: ParallelStreamDownloader
     private lateinit var geckoEngine: GeckoViewEngine
     private var currentGeckoSession: GeckoSession? = null
+    private var canSessionGoBack: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Blokir screenshot dan screen-capture di mode incognito
@@ -52,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         geckoEngine = GeckoViewEngine(mediaSniffer)
 
         initViews()
+        initBackNavigation()
+        requestNotificationPermissionIfNeeded()
         observeMediaStreams()
 
         // Buka dialog vault saat aplikasi pertama kali dibuka
@@ -74,6 +85,27 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabDownload.setOnClickListener {
             showMediaGrabberBottomSheet()
+        }
+    }
+
+    private fun initBackNavigation() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (canSessionGoBack && currentGeckoSession != null) {
+                    currentGeckoSession?.goBack()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
         }
     }
 
@@ -135,6 +167,19 @@ class MainActivity : AppCompatActivity() {
         currentGeckoSession?.let { geckoEngine.destroySession(it) }
 
         val newSession = geckoEngine.createSession(isPrivate = true)
+
+        // Delegate listener untuk history back navigation
+        newSession.navigationDelegate = object : GeckoSession.NavigationDelegate {
+            override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) {
+                canSessionGoBack = canGoBack
+            }
+            override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) {}
+            override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): org.mozilla.geckoview.GeckoResult<org.mozilla.geckoview.AllowOrDeny>? {
+                mediaSniffer.inspectNetworkResponse(url = request.uri, mimeType = null)
+                return org.mozilla.geckoview.GeckoResult.fromValue(org.mozilla.geckoview.AllowOrDeny.ALLOW)
+            }
+        }
+
         geckoEngine.bindSessionToView(newSession, binding.geckoView)
         currentGeckoSession = newSession
 
@@ -164,25 +209,47 @@ class MainActivity : AppCompatActivity() {
         val rvStreams = view.findViewById<RecyclerView>(R.id.rvMediaStreams)
         val pbDownload = view.findViewById<ProgressBar>(R.id.pbDownloadProgress)
         val tvStatus = view.findViewById<TextView>(R.id.tvDownloadStatus)
+        val btnExport = view.findViewById<Button>(R.id.btnExportGallery)
 
         tvTitle.text = getString(R.string.detected_videos, streams.size)
 
+        var lastDownloadedFile: File? = null
+
         val adapter = MediaStreamAdapter { stream ->
-            startStreamDownload(stream, pbDownload, tvStatus)
+            lastDownloadedFile = startStreamDownload(stream, pbDownload, tvStatus, btnExport)
         }
         rvStreams.layoutManager = LinearLayoutManager(this)
         rvStreams.adapter = adapter
         adapter.submitList(streams)
 
+        btnExport.setOnClickListener {
+            val fileToExport = lastDownloadedFile
+            if (fileToExport != null && fileToExport.exists()) {
+                lifecycleScope.launch {
+                    val uri = MediaExporter.exportToPublicGallery(this@MainActivity, fileToExport)
+                    if (uri != null) {
+                        Toast.makeText(this@MainActivity, "Berhasil diekspor ke Galeri!", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this@MainActivity, "Gagal mengekspor video", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
         bottomSheet.setContentView(view)
         bottomSheet.show()
     }
 
-    private fun startStreamDownload(stream: DetectedMediaStream, progressBar: ProgressBar, statusText: TextView) {
+    private fun startStreamDownload(
+        stream: DetectedMediaStream,
+        progressBar: ProgressBar,
+        statusText: TextView,
+        exportButton: Button
+    ): File? {
         val activeVault = vaultManager.activeSession.value
         if (activeVault == null) {
             Toast.makeText(this, "Vault belum terbuka!", Toast.LENGTH_SHORT).show()
-            return
+            return null
         }
 
         val downloadsFolder = File(activeVault.storageDir, "downloads")
@@ -191,36 +258,38 @@ class MainActivity : AppCompatActivity() {
 
         progressBar.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
+        exportButton.visibility = View.GONE
+
+        // Mulai download via Foreground Service untuk kehandalan di background
+        DownloadService.startDownload(this, stream, outputFile)
 
         lifecycleScope.launch {
-            launch {
-                downloader.downloadState.collectLatest { state ->
-                    when (state) {
-                        is DownloadState.Downloading -> {
-                            progressBar.isIndeterminate = state.progressPercent <= 0
-                            if (state.progressPercent > 0) {
-                                progressBar.progress = state.progressPercent
-                            }
-                            val speedKb = state.speedBytesPerSec / 1024
-                            statusText.text = "Mengunduh: ${state.progressPercent}% (${speedKb} KB/s)"
+            downloader.downloadState.collectLatest { state ->
+                when (state) {
+                    is DownloadState.Downloading -> {
+                        progressBar.isIndeterminate = state.progressPercent <= 0
+                        if (state.progressPercent > 0) {
+                            progressBar.progress = state.progressPercent
                         }
-                        is DownloadState.Completed -> {
-                            progressBar.visibility = View.GONE
-                            statusText.text = "Selesai: ${state.localFilePath}"
-                            Toast.makeText(this@MainActivity, "Tersimpan di vault: ${outputFile.name}", Toast.LENGTH_LONG).show()
-                        }
-                        is DownloadState.Failed -> {
-                            progressBar.visibility = View.GONE
-                            statusText.text = "Gagal: ${state.error}"
-                            Toast.makeText(this@MainActivity, "Gagal: ${state.error}", Toast.LENGTH_SHORT).show()
-                        }
-                        DownloadState.Idle -> {}
+                        val speedKb = state.speedBytesPerSec / 1024
+                        statusText.text = "Mengunduh: ${state.progressPercent}% (${speedKb} KB/s)"
                     }
+                    is DownloadState.Completed -> {
+                        progressBar.visibility = View.GONE
+                        statusText.text = "Selesai diunduh ke vault!"
+                        exportButton.visibility = View.VISIBLE
+                        Toast.makeText(this@MainActivity, "Tersimpan di vault: ${outputFile.name}", Toast.LENGTH_LONG).show()
+                    }
+                    is DownloadState.Failed -> {
+                        progressBar.visibility = View.GONE
+                        statusText.text = "Gagal: ${state.error}"
+                        Toast.makeText(this@MainActivity, "Gagal: ${state.error}", Toast.LENGTH_SHORT).show()
+                    }
+                    DownloadState.Idle -> {}
                 }
             }
-
-            downloader.download(stream, outputFile)
         }
+        return outputFile
     }
 
     override fun onDestroy() {
