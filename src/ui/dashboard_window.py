@@ -347,6 +347,13 @@ class DashboardWindow(QMainWindow):
         self.hidden_status_lbl.hide()
         header_layout.addWidget(self.hidden_status_lbl)
 
+        # Toggle Hidden Profiles Button (Interactive Pill Button)
+        self.toggle_hidden_btn = QPushButton("👁️ Show Hidden", header_widget)
+        self.toggle_hidden_btn.setToolTip("Toggle visibility of hidden profiles (Ctrl+H)")
+        self.toggle_hidden_btn.setStyleSheet(pill_button_secondary(height=38, font_size="13px"))
+        self.toggle_hidden_btn.clicked.connect(self.toggle_hidden_profiles)
+        header_layout.addWidget(self.toggle_hidden_btn)
+
         # Add Profile Button (Pill Primary Flame)
         self.add_profile_btn = QPushButton("+ New Profile", header_widget)
         self.add_profile_btn.setStyleSheet(pill_button_primary(height=38, font_size="13px"))
@@ -376,23 +383,55 @@ class DashboardWindow(QMainWindow):
         self.main_layout.addWidget(self.scroll_area, stretch=1)
 
         # Footer shortcut hint
-        footer_lbl = QLabel("💡 Tip: Press Ctrl+H to toggle visibility of hidden profiles", self)
+        footer_lbl = QLabel("💡 Tip: Press Ctrl+H or click 'Show Hidden' to toggle visibility of hidden profiles", self)
         footer_lbl.setStyleSheet(f"color: {Colors.TEXT_MUTED}; font-size: 11.5px;")
         footer_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(footer_lbl)
 
     def setup_shortcuts(self):
-        """Shortcut Ctrl+H to toggle hidden profiles."""
-        self.toggle_hidden_shortcut = QShortcut(QKeySequence("Ctrl+H"), self)
-        self.toggle_hidden_shortcut.activated.connect(self.toggle_hidden_profiles)
+        """Register keyboard shortcuts for toggling hidden profiles across the entire window."""
+        self._shortcuts = []
+        for seq in ["Ctrl+H", "Ctrl+h", "Ctrl+Shift+H"]:
+            sc = QShortcut(QKeySequence(seq), self)
+            sc.setContext(Qt.ShortcutContext.ApplicationShortcut)
+            sc.activated.connect(self.toggle_hidden_profiles)
+            self._shortcuts.append(sc)
+
+    def keyPressEvent(self, event):
+        """Hardware fallback key press handler for Ctrl+H."""
+        if (event.modifiers() & Qt.KeyboardModifier.ControlModifier) and event.key() == Qt.Key.Key_H:
+            self.toggle_hidden_profiles()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
     def toggle_hidden_profiles(self):
-        """Toggle viewing of hidden profiles."""
+        """Toggle viewing of hidden profiles with visual feedback."""
         self.show_hidden = not self.show_hidden
         if self.show_hidden:
+            if hasattr(self, "toggle_hidden_btn"):
+                self.toggle_hidden_btn.setText("👁️‍🗨️ Hide Hidden")
+                self.toggle_hidden_btn.setStyleSheet(f"""
+                    QPushButton {{
+                        background-color: #1E293B;
+                        color: {Colors.ACCENT_CYAN};
+                        border: 1px solid {Colors.ACCENT_CYAN};
+                        border-radius: {Radii.PILL};
+                        font-weight: 700;
+                        font-size: 13px;
+                        padding: 0 16px;
+                    }}
+                    QPushButton:hover {{
+                        background-color: #26354A;
+                        color: #FFFFFF;
+                    }}
+                """)
             self.hidden_status_lbl.setText("👁️ Hidden Profiles: Visible")
             self.hidden_status_lbl.show()
         else:
+            if hasattr(self, "toggle_hidden_btn"):
+                self.toggle_hidden_btn.setText("👁️ Show Hidden")
+                self.toggle_hidden_btn.setStyleSheet(pill_button_secondary(height=38, font_size="13px"))
             self.hidden_status_lbl.hide()
         self.refresh_profiles()
 
@@ -467,9 +506,14 @@ class DashboardWindow(QMainWindow):
         lbl.setStyleSheet(f"font-size: 16px; font-weight: 700; color: #FFFFFF;")
         layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        sub_lbl = QLabel("Press Ctrl+H to reveal hidden profiles, or create a new one.", box)
+        sub_lbl = QLabel("Press Ctrl+H or click below to reveal hidden profiles, or create a new one.", box)
         sub_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 13px;")
         layout.addWidget(sub_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        reveal_btn = QPushButton("👁️ Show Hidden Profiles Now (Ctrl+H)", box)
+        reveal_btn.setStyleSheet(pill_button_primary(height=40, font_size="13px"))
+        reveal_btn.clicked.connect(self.toggle_hidden_profiles)
+        layout.addWidget(reveal_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.content_layout.addWidget(box)
 
@@ -493,7 +537,11 @@ class DashboardWindow(QMainWindow):
     def open_create_profile_dialog(self):
         dialog = CreateProfileDialog(self.profile_manager, self)
         if dialog.exec() == QDialog.DialogCode.Accepted and dialog.created_profile:
-            self.refresh_profiles()
+            # If newly created profile is hidden, automatically reveal hidden profiles so user sees it
+            if dialog.created_profile.get("is_hidden", False) and not self.show_hidden:
+                self.toggle_hidden_profiles()
+            else:
+                self.refresh_profiles()
             self.select_profile(dialog.created_profile)
 
     def select_profile(self, profile: Dict[str, Any]):
