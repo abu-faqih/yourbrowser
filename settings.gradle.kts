@@ -18,7 +18,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "YourBrowser"
 
-
-// Modul akan diinisialisasi kembali saat implementasi ulang dimulai
-// include(":app")
+include(":app")
 

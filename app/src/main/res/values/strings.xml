@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">YourBrowser</string>
+    <string name="search_hint">Search or enter web address...</string>
+    <string name="shields_active">Shields UP</string>
+    <string name="shields_blocked_ads">Ads &amp; Trackers Blocked</string>
+    <string name="new_tab">New Tab</string>
+    <string name="close_tab">Close Tab</string>
+    <string name="bookmarks">Bookmarks</string>
+    <string name="history">History</string>
+    <string name="lock_tab">Lock Tab</string>
+    <string name="unlock_tab">Unlock Tab</string>
+    <string name="vault_passcode">Enter Passcode / PIN</string>
+</resources>

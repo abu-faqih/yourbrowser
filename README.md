@@ -171,3 +171,35 @@ Aplikasi mendukung mode portabel murni. Seluruh profil, bookmark, riwayat, sesi 
 ./dist/YourBrowser-1.0.0-x86_64.AppImage
 ```
 
+---
+
+## YourBrowser for Android (v1.0.0)
+
+YourBrowser for Android adalah aplikasi peramban mobile native berperforma tinggi dengan tema **Brave Obsidian Dark**, didesain untuk kenyamanan penjelajahan privat dan bebas iklan di semua perangkat Android.
+
+### Fitur Utama Android
+1. **Brave Shields Native Blocker**: Memblokir iklan, trackers, skrip penambang, dan jebakan popup streaming langsung pada request interceptor.
+2. **Omnibox Capsule**: Kolom pencarian membulat penuh dengan indikator status SSL & Bookmark cepat.
+3. **Multi-Tab Manager**: Pengalih tab sheet responsif dengan counter tab real-time.
+4. **Proteksi Sesi & Vault Tab**: Mengunci tab rahasia dengan PIN / kata sandi kriptografis SHA-256.
+5. **Universal Device Support**: Mendukung Android 7.0 (Nougat, API 24) hingga Android 14/15 (API 34/35) dengan jangkauan 99.9%+ perangkat global.
+
+### Menjalankan Pengujian & Membangun Signed APK
+```bash
+# 1. Menjalankan Unit Test Android
+./gradlew test
+
+# 2. Membangun Release APK yang telah ditandatangani secara digital (Signed APK)
+./gradlew assembleRelease
+
+# File APK rilis siap pasang berada di:
+# dist/YourBrowser-1.0.0-android.apk
+
+# 3. Verifikasi Tanda Tangan Digital APK (v2 & v3 Signature Scheme)
+$ANDROID_HOME/build-tools/34.0.0/apksigner verify --verbose dist/YourBrowser-1.0.0-android.apk
+
+# 4. Memasang APK ke Perangkat Android via ADB
+adb install -r dist/YourBrowser-1.0.0-android.apk
+```
+
+
