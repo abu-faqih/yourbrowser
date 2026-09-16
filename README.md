@@ -40,9 +40,11 @@ yourbrowser/
 │   │   ├── shields_panel.py            # Dropdown popup panel interaktif Brave Shields
 │   │   └── lock_modal.py               # Dialog set password & overlay pengunci tab
 │   └── resources/
-│       ├── style.py                    # Tema Brave Obsidian Pro (QSS / CSS)
+│       ├── design_system.py            # Modul Design System tokens (Colors, Gradients, Radii, Typography)
+│       ├── style.py                    # Tema Brave Obsidian Pro (QSS / CSS) berbasis design system
 │       └── icons.py                    # Modul ikon vektor SVG resolusi tinggi
 ├── tests/
+│   ├── test_design_system.py           # Unit test token visual, pill helpers, & gradasi design system
 │   ├── test_profile_manager.py         # Unit test CRUD profil, direktori isolasi, & persistensi sesi tab
 │   ├── test_dashboard_integration.py   # Integration test Dashboard, Ctrl+H toggle, password auth
 │   ├── test_security.py                # Unit test verifikasi enkripsi password tab & profil
@@ -107,7 +109,13 @@ yourbrowser/
 - Buka jendela privat terpisah (`Ctrl+Shift+N`) dengan profil *off-the-record* memori terisolasi tanpa jejak riwayat atau cookies disk.
 - Dilengkapi badge visual khusus `🕶️ Private Window`.
 
-### 11. Pintasan Keyboard Standar (Keyboard Shortcuts)
+### 11. Unified Design System & Fluid Visual Tokens
+- Arsitektur desain konsisten, modern, dan profesional berbasis token (`Colors`, `Gradients`, `Radii`, `Typography`) di `src/resources/design_system.py`.
+- Mengusung bentuk **pill / capsule** (`border-radius: 9999px` / `14-18px`) pada Omnibox, tombol aksi utama, dan badge status.
+- Dilengkapi gradasi linear dinamis (*Brave Flame Gradient*, *Cyber Cyan Gradient*, *Emerald Glow*, dan *Deep Obsidian Surface Depth*).
+- Dokumentasi lengkap tersedia pada [`DESIGN_SYSTEM.md`](file:///mnt/data/aplikasi/yourbrowser/DESIGN_SYSTEM.md).
+
+### 12. Pintasan Keyboard Standar (Keyboard Shortcuts)
 | Shortcut | Konteks | Aksi |
 | :--- | :--- | :--- |
 | `Ctrl+H` | Dashboard | Sembunyikan / Tampilkan profil rahasia (*Toggle Hidden Profiles*) |
@@ -151,3 +159,15 @@ python3 -m unittest discover tests/
 # Menjalankan verifikasi streaming video pada situs target (LK21)
 python3 tests/test_stream_native.py
 ```
+
+### 4. Membangun & Menjalankan Portable AppImage (v1.0.0)
+Aplikasi mendukung mode portabel murni. Seluruh profil, bookmark, riwayat, sesi tab, dan cache akan disimpan secara otomatis di folder `yourbrowser_data/` yang berada tepat di samping berkas `.AppImage` (atau di `<nama>.AppImage.home/`). Anda dapat memindahkan file AppImage beserta foldernya ke flashdisk atau komputer lain tanpa kehilangan data sedikitpun!
+
+```bash
+# Membangun file Portable AppImage ke folder dist/
+./scripts/build_appimage.sh
+
+# Menjalankan Portable AppImage
+./dist/YourBrowser-1.0.0-x86_64.AppImage
+```
+

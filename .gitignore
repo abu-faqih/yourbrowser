@@ -13,3 +13,7 @@
 __pycache__/
 *.pyc
 .browser_data/
+yourbrowser_data/
+dist/
+build/
+*.AppImage

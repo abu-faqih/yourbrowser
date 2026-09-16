@@ -176,7 +176,7 @@ class YourBrowserWindow(QMainWindow):
         )
 
         self.interceptor = ShieldUrlInterceptor(self)
-        self.interceptor.add_listener(self.on_ad_blocked)
+        self.interceptor.ad_blocked.connect(self.on_ad_blocked)
         self.profile.setUrlRequestInterceptor(self.interceptor)
 
         # Connect downloads handler
@@ -210,15 +210,10 @@ class YourBrowserWindow(QMainWindow):
         # Incognito indicator in tab strip if private
         if self.is_incognito:
             incog_badge = QLabel("🕶️ Private", tab_strip_widget)
-            incog_badge.setStyleSheet("""
-                background-color: #311B92;
-                color: #C084FC;
-                font-weight: 700;
-                font-size: 11px;
-                padding: 4px 10px;
-                border-radius: 6px;
-                margin-right: 6px;
-            """)
+            incog_badge.setStyleSheet(
+                "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8B5CF6, stop:1 #6366F1);"
+                "color: #FFFFFF; font-weight: 700; font-size: 11px; padding: 4px 12px; border-radius: 9999px; margin-right: 6px;"
+            )
             tab_strip_layout.addWidget(incog_badge)
 
         self.tab_bar = QTabBar(tab_strip_widget)
@@ -337,17 +332,18 @@ class YourBrowserWindow(QMainWindow):
         self.dashboard_btn.setToolTip("Back to Profiles Dashboard")
         self.dashboard_btn.setStyleSheet("""
             QPushButton#dashboard_btn {
-                background-color: #161A24;
+                background-color: #181D2C;
                 color: #CBD5E1;
-                border: 1px solid #283042;
-                border-radius: 6px;
-                padding: 5px 10px;
+                border: 1px solid #263045;
+                border-radius: 14px;
+                padding: 5px 14px;
                 font-weight: 600;
+                font-size: 12px;
             }
             QPushButton#dashboard_btn:hover {
-                background-color: #FF5500;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF5500, stop:1 #FF2A54);
                 color: #FFFFFF;
-                border-color: #FF5500;
+                border-color: rgba(255, 255, 255, 0.25);
             }
         """)
         self.dashboard_btn.clicked.connect(self.go_to_dashboard)
@@ -572,10 +568,12 @@ class YourBrowserWindow(QMainWindow):
             if container.is_locked:
                 self.lock_btn.setText("🔓 Unlock Tab")
                 self.lock_btn.setStyleSheet("""
-                    background-color: #EF4444;
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #EF4444, stop:1 #DC2626);
                     color: #FFFFFF;
-                    border: 1px solid #EF4444;
+                    border: 1px solid rgba(255, 255, 255, 0.25);
+                    border-radius: 16px;
                     font-weight: 700;
+                    padding: 6px 16px;
                 """)
                 self.omnibox.setText("🔒 [Encrypted Tab Session]")
                 self.ssl_icon_lbl.setText("🔒")

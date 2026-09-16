@@ -12,6 +12,11 @@ from PyQt6.QtCore import pyqtSignal, Qt, QSize
 
 from src.core.browser_data import HistoryManager
 from src.resources.icons import create_svg_icon
+from src.resources.style import BRAVE_THEME_QSS
+from src.resources.design_system import (
+    Colors, Gradients, Radii, Typography,
+    pill_button_primary, pill_button_secondary, rounded_input
+)
 
 
 class HistoryDialog(QDialog):
@@ -24,26 +29,57 @@ class HistoryDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Browsing History - YourBrowser")
         self.resize(750, 520)
+        self.setStyleSheet(f"""
+            QDialog {{
+                background: {Gradients.SURFACE_DIALOG};
+                color: {Colors.TEXT_PRIMARY};
+            }}
+            QListWidget {{
+                background-color: {Colors.SURFACE_1};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.MD};
+                color: {Colors.TEXT_PRIMARY};
+                padding: 6px;
+            }}
+            QListWidget::item {{
+                padding: 8px 12px;
+                border-radius: {Radii.SM};
+                margin-bottom: 2px;
+            }}
+            QListWidget::item:selected {{
+                background-color: {Colors.SURFACE_3};
+                color: {Colors.ACCENT_CYAN};
+            }}
+            QListWidget::item:hover:!selected {{
+                background-color: {Colors.SURFACE_2};
+            }}
+        """)
         self.history_manager = history_manager
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(14)
 
         # Header bar
         header_layout = QHBoxLayout()
         header_icon = QLabel(self)
-        header_icon.setPixmap(create_svg_icon("history", "#FF5500", 22).pixmap(22, 22))
+        header_icon.setPixmap(create_svg_icon("history", Colors.ACCENT_ORANGE, 22).pixmap(22, 22))
         header_layout.addWidget(header_icon)
 
         title_lbl = QLabel("Browsing History", self)
-        title_lbl.setStyleSheet("font-size: 17px; font-weight: 700; color: #FFFFFF;")
+        title_lbl.setStyleSheet(f"font-size: {Typography.SIZE_SUBTITLE}; font-weight: 700; color: #FFFFFF;")
         header_layout.addWidget(title_lbl)
         header_layout.addStretch()
 
         clear_all_btn = QPushButton("Clear All History", self)
-        clear_all_btn.setProperty("class", "dialog-btn-danger")
-        clear_all_btn.setIcon(create_svg_icon("trash", "#FECACA", 14))
+        clear_all_btn.setStyleSheet(pill_button_primary(
+            gradient=Gradients.DANGER_CRIMSON,
+            gradient_hover=Gradients.DANGER_CRIMSON_HOVER,
+            gradient_pressed=Gradients.DANGER_CRIMSON,
+            height=34,
+            font_size="12px"
+        ))
+        clear_all_btn.setIcon(create_svg_icon("trash", "#FFFFFF", 14))
         clear_all_btn.clicked.connect(self._on_clear_all)
         header_layout.addWidget(clear_all_btn)
 
@@ -51,7 +87,7 @@ class HistoryDialog(QDialog):
 
         # Search bar
         self.search_input = QLineEdit(self)
-        self.search_input.setProperty("class", "dialog-search")
+        self.search_input.setStyleSheet(rounded_input(height=38, radius=Radii.PILL))
         self.search_input.setPlaceholderText("Search history by title or URL...")
         self.search_input.textChanged.connect(self._on_search_changed)
         layout.addWidget(self.search_input)
@@ -63,23 +99,24 @@ class HistoryDialog(QDialog):
 
         # Action bar at bottom
         action_layout = QHBoxLayout()
+        action_layout.setSpacing(10)
         self.status_lbl = QLabel(self)
-        self.status_lbl.setStyleSheet("color: #64748B; font-size: 12px;")
+        self.status_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: {Typography.SIZE_SMALL};")
         action_layout.addWidget(self.status_lbl)
         action_layout.addStretch()
 
         delete_btn = QPushButton("Delete Selected", self)
-        delete_btn.setProperty("class", "dialog-btn-secondary")
+        delete_btn.setStyleSheet(pill_button_secondary(height=34, font_size="12px"))
         delete_btn.clicked.connect(self._on_delete_selected)
         action_layout.addWidget(delete_btn)
 
         open_tab_btn = QPushButton("Open in New Tab", self)
-        open_tab_btn.setProperty("class", "dialog-btn-secondary")
+        open_tab_btn.setStyleSheet(pill_button_secondary(height=34, font_size="12px"))
         open_tab_btn.clicked.connect(self._on_open_in_new_tab)
         action_layout.addWidget(open_tab_btn)
 
         open_btn = QPushButton("Open", self)
-        open_btn.setProperty("class", "dialog-btn-primary")
+        open_btn.setStyleSheet(pill_button_primary(height=34, font_size="12px"))
         open_btn.clicked.connect(self._on_open)
         action_layout.addWidget(open_btn)
 

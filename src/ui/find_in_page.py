@@ -10,10 +10,11 @@ from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtWebEngineCore import QWebEnginePage
 
 from src.resources.icons import create_svg_icon
+from src.resources.design_system import Colors, Gradients, Radii, Typography, rounded_input
 
 
 class FindInPageWidget(QWidget):
-    """Find text in active page bar."""
+    """Find text in active page bar styled as a modern Obsidian pill widget."""
 
     close_requested = pyqtSignal()
 
@@ -22,47 +23,70 @@ class FindInPageWidget(QWidget):
         self.setObjectName("find_bar")
         self.active_view = None
 
+        self.setStyleSheet(f"""
+            QWidget#find_bar {{
+                background: {Gradients.SURFACE_DIALOG};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.PILL};
+                padding: 4px 10px;
+            }}
+            QPushButton {{
+                background-color: transparent;
+                border: 1px solid transparent;
+                border-radius: {Radii.PILL};
+                padding: 4px;
+            }}
+            QPushButton:hover {{
+                background-color: {Colors.SURFACE_3};
+                border: 1px solid {Colors.BORDER_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {Colors.SURFACE_2};
+            }}
+        """)
+
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(6, 4, 6, 4)
+        layout.setContentsMargins(8, 4, 8, 4)
         layout.setSpacing(6)
 
         # Search icon
         search_icon_lbl = QLabel(self)
-        search_icon_lbl.setPixmap(create_svg_icon("find", "#94A3B8", 14).pixmap(14, 14))
+        search_icon_lbl.setPixmap(create_svg_icon("find", Colors.ACCENT_CYAN, 15).pixmap(15, 15))
         layout.addWidget(search_icon_lbl)
 
         # Search input
         self.input_field = QLineEdit(self)
         self.input_field.setObjectName("find_input")
         self.input_field.setPlaceholderText("Find in page...")
+        self.input_field.setStyleSheet(rounded_input(height=30, radius=Radii.PILL))
         self.input_field.textChanged.connect(self._on_text_changed)
         self.input_field.returnPressed.connect(self.find_next)
         layout.addWidget(self.input_field)
 
         # Prev button
         self.prev_btn = QPushButton(self)
-        self.prev_btn.setIcon(create_svg_icon("arrow_left", "#94A3B8", 14))
+        self.prev_btn.setIcon(create_svg_icon("arrow_left", Colors.TEXT_SECONDARY, 14))
         self.prev_btn.setIconSize(QSize(14, 14))
         self.prev_btn.setToolTip("Previous match (Shift+Enter)")
-        self.prev_btn.setFixedSize(26, 26)
+        self.prev_btn.setFixedSize(28, 28)
         self.prev_btn.clicked.connect(self.find_prev)
         layout.addWidget(self.prev_btn)
 
         # Next button
         self.next_btn = QPushButton(self)
-        self.next_btn.setIcon(create_svg_icon("arrow_right", "#94A3B8", 14))
+        self.next_btn.setIcon(create_svg_icon("arrow_right", Colors.TEXT_SECONDARY, 14))
         self.next_btn.setIconSize(QSize(14, 14))
         self.next_btn.setToolTip("Next match (Enter)")
-        self.next_btn.setFixedSize(26, 26)
+        self.next_btn.setFixedSize(28, 28)
         self.next_btn.clicked.connect(self.find_next)
         layout.addWidget(self.next_btn)
 
         # Close button
         self.close_btn = QPushButton(self)
-        self.close_btn.setIcon(create_svg_icon("close", "#94A3B8", 14))
+        self.close_btn.setIcon(create_svg_icon("close", Colors.TEXT_MUTED, 14))
         self.close_btn.setIconSize(QSize(14, 14))
         self.close_btn.setToolTip("Close find bar (Esc)")
-        self.close_btn.setFixedSize(26, 26)
+        self.close_btn.setFixedSize(28, 28)
         self.close_btn.clicked.connect(self.close_bar)
         layout.addWidget(self.close_btn)
 

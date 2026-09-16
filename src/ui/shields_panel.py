@@ -1,17 +1,19 @@
 """
 YourBrowser UI - Ultra-Modern Brave Shields Dropdown Panel
+Unified with Design System tokens, pill toggles, and vibrant gradients.
 """
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QWidget
+    QFrame
 )
 from PyQt6.QtCore import Qt
-from src.resources.icons import create_svg_icon
+from src.resources.design_system import Colors, Gradients, Radii, Typography
+
 
 class ShieldsPopup(QDialog):
     """Modern Brave-style Shields popover with real-time telemetry card."""
-    
+
     def __init__(self, interceptor, current_url="", parent=None):
         super().__init__(parent)
         self.interceptor = interceptor
@@ -21,69 +23,76 @@ class ShieldsPopup(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        self.setStyleSheet("""
-            QDialog {
+        self.setStyleSheet(f"""
+            QDialog {{
                 background-color: transparent;
-            }
-            #card {
-                background-color: #161B26;
-                border: 1px solid #2C3549;
-                border-radius: 16px;
+            }}
+            #card {{
+                background: {Gradients.SURFACE_DIALOG};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.LG};
                 padding: 18px;
-            }
-            QLabel.brand-title {
+            }}
+            QLabel.brand-title {{
                 font-size: 15px;
                 font-weight: 700;
-                color: #FFFFFF;
-            }
-            QLabel.domain-text {
+                color: {Colors.TEXT_PRIMARY};
+            }}
+            QLabel.domain-text {{
                 font-size: 12px;
-                color: #94A3B8;
-            }
-            QPushButton.toggle-btn-on {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF5500, stop:1 #FF2A54);
+                color: {Colors.TEXT_SECONDARY};
+            }}
+            QPushButton.toggle-btn-on {{
+                background: {Gradients.PRIMARY_FLAME};
                 color: #FFFFFF;
                 font-weight: 700;
                 font-size: 11px;
-                padding: 6px 14px;
-                border-radius: 12px;
-                border: none;
-            }
-            QPushButton.toggle-btn-off {
-                background-color: #334155;
-                color: #CBD5E1;
+                padding: 6px 16px;
+                border-radius: 14px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }}
+            QPushButton.toggle-btn-on:hover {{
+                background: {Gradients.PRIMARY_FLAME_HOVER};
+            }}
+            QPushButton.toggle-btn-off {{
+                background-color: {Colors.SURFACE_2};
+                color: {Colors.TEXT_SECONDARY};
                 font-weight: 700;
                 font-size: 11px;
-                padding: 6px 14px;
-                border-radius: 12px;
-                border: none;
-            }
-            #metric_box {
-                background-color: #0E121A;
-                border: 1px solid #232B3B;
-                border-radius: 12px;
+                padding: 6px 16px;
+                border-radius: 14px;
+                border: 1px solid {Colors.BORDER_DEFAULT};
+            }}
+            QPushButton.toggle-btn-off:hover {{
+                background-color: {Colors.SURFACE_3};
+                color: #FFFFFF;
+            }}
+            #metric_box {{
+                background-color: {Colors.BG_BASE};
+                border: 1px solid {Colors.BORDER_SUBTLE};
+                border-radius: {Radii.MD};
                 padding: 16px;
                 margin: 10px 0;
-            }
-            QLabel.counter-number {
-                font-size: 34px;
+            }}
+            QLabel.counter-number {{
+                font-size: 36px;
                 font-weight: 800;
-                color: #FF5500;
-            }
-            QLabel.counter-label {
+                color: {Colors.ACCENT_ORANGE};
+            }}
+            QLabel.counter-label {{
                 font-size: 12px;
                 font-weight: 500;
-                color: #94A3B8;
-            }
-            QLabel.feature-item {
+                color: {Colors.TEXT_SECONDARY};
+            }}
+            QLabel.feature-item {{
                 font-size: 12px;
                 color: #E2E8F0;
-                padding: 3px 0;
-            }
-            QLabel.badge-green {
-                color: #10B981;
+                padding: 2px 0;
+            }}
+            QLabel.badge-green {{
+                color: {Colors.STATUS_SUCCESS};
                 font-weight: 700;
-            }
+            }}
         """)
 
         layout = QVBoxLayout(self)
@@ -165,7 +174,7 @@ class ShieldsPopup(QDialog):
 
         c_layout.addLayout(list_box)
         layout.addWidget(card)
-        self.resize(320, 270)
+        self.resize(320, 275)
 
     def on_toggle_shields(self):
         self.interceptor.shields_enabled = not self.interceptor.shields_enabled

@@ -93,6 +93,7 @@ ANTI_POPUP_INJECTION = """
 
 class ShieldUrlInterceptor(QWebEngineUrlRequestInterceptor):
     """Network interceptor enforcing Brave-like aggressive Shield protection."""
+    ad_blocked = pyqtSignal(int, str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -115,6 +116,7 @@ class ShieldUrlInterceptor(QWebEngineUrlRequestInterceptor):
         if is_ad:
             info.block(True)
             self.blocked_count += 1
+            self.ad_blocked.emit(self.blocked_count, url)
             for cb in self.listeners:
                 try:
                     cb(self.blocked_count, url)

@@ -8,6 +8,10 @@ import sys
 import os
 import shutil
 import tempfile
+
+if "QTWEBENGINE_CHROMIUM_FLAGS" not in os.environ:
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
+
 from PyQt6.QtWidgets import QApplication
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -57,6 +61,32 @@ class TestBrowserDataManagers(unittest.TestCase):
         entry2 = self.bm.add_bookmark("Test ID", "https://example.com")
         self.assertTrue(self.bm.remove_by_id(entry2["id"]))
         self.assertEqual(len(self.bm.get_all()), 0)
+
+    def test_portable_appimage_data_dir(self):
+        from src.core.browser_data import get_default_config_dir
+        
+        mock_appimage = os.path.join(self.test_dir, "YourBrowser.AppImage")
+        with open(mock_appimage, "w") as f:
+            f.write("mock")
+        
+        old_env = os.environ.get("APPIMAGE")
+        old_data_dir = os.environ.get("YOURBROWSER_DATA_DIR")
+        try:
+            if "YOURBROWSER_DATA_DIR" in os.environ:
+                del os.environ["YOURBROWSER_DATA_DIR"]
+            os.environ["APPIMAGE"] = mock_appimage
+
+            target_dir = get_default_config_dir()
+            expected_adjacent = os.path.join(self.test_dir, "yourbrowser_data")
+            self.assertEqual(target_dir, expected_adjacent)
+            self.assertTrue(os.path.exists(expected_adjacent))
+        finally:
+            if old_env is not None:
+                os.environ["APPIMAGE"] = old_env
+            elif "APPIMAGE" in os.environ:
+                del os.environ["APPIMAGE"]
+            if old_data_dir is not None:
+                os.environ["YOURBROWSER_DATA_DIR"] = old_data_dir
 
     def test_history_lifecycle(self):
         self.hm.add_entry("Home", "https://search.brave.com")

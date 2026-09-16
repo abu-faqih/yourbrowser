@@ -13,6 +13,10 @@ from PyQt6.QtGui import QDesktopServices
 
 from src.core.download_manager import DownloadManager, DownloadTracker, DownloadItemState
 from src.resources.icons import create_svg_icon
+from src.resources.design_system import (
+    Colors, Gradients, Radii, Typography,
+    pill_button_primary, pill_button_secondary
+)
 
 
 class DownloadItemWidget(QWidget):
@@ -23,39 +27,43 @@ class DownloadItemWidget(QWidget):
         self.tracker = tracker
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(6)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(8)
 
         # Top row: icon + filename + status + buttons
         top_row = QHBoxLayout()
+        top_row.setSpacing(10)
         icon_lbl = QLabel(self)
-        icon_lbl.setPixmap(create_svg_icon("download", "#38BDF8", 16).pixmap(16, 16))
+        icon_lbl.setPixmap(create_svg_icon("download", Colors.ACCENT_CYAN, 18).pixmap(18, 18))
         top_row.addWidget(icon_lbl)
 
         self.name_lbl = QLabel(tracker.filename, self)
-        self.name_lbl.setStyleSheet("font-weight: 600; color: #FFFFFF; font-size: 13px;")
+        self.name_lbl.setStyleSheet(f"font-weight: 600; color: #FFFFFF; font-size: 13.5px;")
         top_row.addWidget(self.name_lbl, stretch=1)
 
         self.status_lbl = QLabel(self)
-        self.status_lbl.setStyleSheet("color: #94A3B8; font-size: 12px;")
+        self.status_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 12px;")
         top_row.addWidget(self.status_lbl)
 
-        # Action buttons
+        # Action buttons (Pills)
         self.open_file_btn = QPushButton("Open File", self)
-        self.open_file_btn.setProperty("class", "dialog-btn-secondary")
-        self.open_file_btn.setFixedHeight(28)
+        self.open_file_btn.setStyleSheet(pill_button_secondary(height=28, font_size="11.5px"))
         self.open_file_btn.clicked.connect(self._open_file)
         top_row.addWidget(self.open_file_btn)
 
         self.open_dir_btn = QPushButton("Open Folder", self)
-        self.open_dir_btn.setProperty("class", "dialog-btn-secondary")
-        self.open_dir_btn.setFixedHeight(28)
+        self.open_dir_btn.setStyleSheet(pill_button_secondary(height=28, font_size="11.5px"))
         self.open_dir_btn.clicked.connect(self._open_folder)
         top_row.addWidget(self.open_dir_btn)
 
         self.cancel_btn = QPushButton("Cancel", self)
-        self.cancel_btn.setProperty("class", "dialog-btn-danger")
-        self.cancel_btn.setFixedHeight(28)
+        self.cancel_btn.setStyleSheet(pill_button_primary(
+            gradient=Gradients.DANGER_CRIMSON,
+            gradient_hover=Gradients.DANGER_CRIMSON_HOVER,
+            gradient_pressed=Gradients.DANGER_CRIMSON,
+            height=28,
+            font_size="11.5px"
+        ))
         self.cancel_btn.clicked.connect(self.tracker.cancel)
         top_row.addWidget(self.cancel_btn)
 
@@ -68,11 +76,11 @@ class DownloadItemWidget(QWidget):
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
-                background-color: #1E2535;
+                background-color: #181D2C;
                 border-radius: 3px;
             }
             QProgressBar::chunk {
-                background-color: #FF5500;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF5500, stop:1 #FF2A54);
                 border-radius: 3px;
             }
         """)
@@ -121,6 +129,9 @@ class DownloadItemWidget(QWidget):
             QDesktopServices.openUrl(QUrl.fromLocalFile(folder))
 
 
+from src.resources.style import BRAVE_THEME_QSS
+
+
 class DownloadsDialog(QDialog):
     """Downloads queue and history dialog."""
 
@@ -128,31 +139,55 @@ class DownloadsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Downloads - YourBrowser")
         self.resize(750, 480)
+        self.setStyleSheet(f"""
+            QDialog {{
+                background: {Gradients.SURFACE_DIALOG};
+                color: {Colors.TEXT_PRIMARY};
+            }}
+            QListWidget {{
+                background-color: {Colors.SURFACE_1};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.MD};
+                color: {Colors.TEXT_PRIMARY};
+                padding: 6px;
+            }}
+            QListWidget::item {{
+                background-color: {Colors.SURFACE_2};
+                border: 1px solid {Colors.BORDER_SUBTLE};
+                border-radius: {Radii.MD};
+                margin-bottom: 6px;
+                padding: 4px;
+            }}
+            QListWidget::item:hover {{
+                border-color: {Colors.BORDER_DEFAULT};
+            }}
+        """)
         self.download_manager = download_manager
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(14)
 
         # Header
         header_layout = QHBoxLayout()
+        header_layout.setSpacing(10)
         header_icon = QLabel(self)
-        header_icon.setPixmap(create_svg_icon("download", "#FF5500", 22).pixmap(22, 22))
+        header_icon.setPixmap(create_svg_icon("download", Colors.ACCENT_ORANGE, 22).pixmap(22, 22))
         header_layout.addWidget(header_icon)
 
         title_lbl = QLabel("Downloads", self)
-        title_lbl.setStyleSheet("font-size: 17px; font-weight: 700; color: #FFFFFF;")
+        title_lbl.setStyleSheet(f"font-size: {Typography.SIZE_SUBTITLE}; font-weight: 700; color: #FFFFFF;")
         header_layout.addWidget(title_lbl)
         header_layout.addStretch()
 
         open_folder_btn = QPushButton("Open Downloads Folder", self)
-        open_folder_btn.setProperty("class", "dialog-btn-secondary")
+        open_folder_btn.setStyleSheet(pill_button_secondary(height=34, font_size="12px"))
         open_folder_btn.setIcon(create_svg_icon("folder", "#CBD5E1", 14))
         open_folder_btn.clicked.connect(self._open_downloads_dir)
         header_layout.addWidget(open_folder_btn)
 
         clear_btn = QPushButton("Clear Finished", self)
-        clear_btn.setProperty("class", "dialog-btn-secondary")
+        clear_btn.setStyleSheet(pill_button_secondary(height=34, font_size="12px"))
         clear_btn.clicked.connect(self._clear_finished)
         header_layout.addWidget(clear_btn)
 

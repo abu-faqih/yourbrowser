@@ -11,11 +11,58 @@ import uuid
 from typing import List, Dict, Any, Optional
 
 def get_default_config_dir() -> str:
-    """Determine a writable configuration directory with fallback."""
+    """Determine a writable configuration directory with fallback and portable AppImage support."""
     env_dir = os.environ.get("YOURBROWSER_DATA_DIR")
     if env_dir:
-        return env_dir
+        try:
+            os.makedirs(env_dir, exist_ok=True)
+            return env_dir
+        except (OSError, PermissionError):
+            pass
 
+    # 1. Check for standard AppImage portable home/config
+    appimage_path = os.environ.get("APPIMAGE")
+    if appimage_path:
+        appimage_dir = os.path.dirname(os.path.abspath(appimage_path))
+        
+        # Standard AppImage portable home: <AppImageName>.home
+        appimage_home = f"{appimage_path}.home"
+        if os.path.exists(appimage_home):
+            portable_cfg = os.path.join(appimage_home, ".config", "yourbrowser")
+            try:
+                os.makedirs(portable_cfg, exist_ok=True)
+                return portable_cfg
+            except (OSError, PermissionError):
+                pass
+
+        # Standard AppImage portable config: <AppImageName>.config
+        appimage_config = f"{appimage_path}.config"
+        if os.path.exists(appimage_config):
+            portable_cfg = os.path.join(appimage_config, "yourbrowser")
+            try:
+                os.makedirs(portable_cfg, exist_ok=True)
+                return portable_cfg
+            except (OSError, PermissionError):
+                pass
+
+        # Automatic adjacent portable directory alongside AppImage: <AppImageDir>/yourbrowser_data
+        adjacent_data = os.path.join(appimage_dir, "yourbrowser_data")
+        try:
+            os.makedirs(adjacent_data, exist_ok=True)
+            test_file = os.path.join(adjacent_data, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            return adjacent_data
+        except (OSError, PermissionError):
+            pass
+
+    # 2. Check for local adjacent portable directory in working directory
+    local_portable = os.path.join(os.getcwd(), "yourbrowser_data")
+    if os.path.exists(local_portable):
+        return local_portable
+
+    # 3. Standard system user configuration directory
     candidate = os.path.expanduser("~/.config/yourbrowser")
     try:
         os.makedirs(candidate, exist_ok=True)

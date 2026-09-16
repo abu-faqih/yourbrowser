@@ -11,6 +11,8 @@ from PyQt6.QtCore import pyqtSignal, Qt
 
 from src.core.browser_data import SettingsManager
 from src.resources.icons import create_svg_icon
+from src.resources.style import BRAVE_THEME_QSS
+from src.resources.design_system import Colors, Radii
 
 
 class SettingsDialog(QDialog):
@@ -22,6 +24,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Settings - YourBrowser")
         self.resize(560, 420)
+        self.setStyleSheet(BRAVE_THEME_QSS)
         self.settings_manager = settings_manager
 
         layout = QVBoxLayout(self)
@@ -42,45 +45,47 @@ class SettingsDialog(QDialog):
 
         # Form Group
         form_group = QGroupBox("Search & Navigation", self)
-        form_group.setStyleSheet("""
-            QGroupBox {
+        form_group.setStyleSheet(f"""
+            QGroupBox {{
                 font-weight: 600;
-                color: #E2E8F0;
-                border: 1px solid #212838;
-                border-radius: 8px;
+                color: {Colors.TEXT_PRIMARY};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.MD};
                 margin-top: 10px;
-                padding-top: 15px;
-            }
-            QGroupBox::title {
+                padding-top: 16px;
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
-            }
+                left: 14px;
+                padding: 0 6px;
+            }}
         """)
         form_layout = QFormLayout(form_group)
         form_layout.setContentsMargins(16, 16, 16, 16)
-        form_layout.setSpacing(12)
+        form_layout.setSpacing(14)
 
         # Search Engine Combo
         self.engine_combo = QComboBox(form_group)
         self.engine_combo.addItems(["Brave Search", "DuckDuckGo", "Google", "Bing"])
-        self.engine_combo.setStyleSheet("""
-            QComboBox {
-                background-color: #141924;
-                border: 1px solid #2B3347;
-                border-radius: 6px;
-                padding: 6px 12px;
+        self.engine_combo.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {Colors.SURFACE_1};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.SM};
+                padding: 7px 14px;
                 color: #FFFFFF;
-            }
-            QComboBox::drop-down {
+                font-size: 13px;
+            }}
+            QComboBox::drop-down {{
                 border: none;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #161A24;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {Colors.SURFACE_OVERLAY};
                 color: #FFFFFF;
-                selection-background-color: #242D3E;
-                border: 1px solid #2B3347;
-            }
+                selection-background-color: {Colors.SURFACE_3};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.SM};
+            }}
         """)
 
         current_engine = self.settings_manager.get("search_engine", "brave")

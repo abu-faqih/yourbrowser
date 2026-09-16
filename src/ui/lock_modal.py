@@ -1,5 +1,6 @@
 """
 YourBrowser UI - Cyber Obsidian Lock Overlay & Password Protection Modal
+Unified with Design System tokens, pill buttons, and cyber security gradients.
 """
 
 from PyQt6.QtWidgets import (
@@ -7,10 +8,15 @@ from PyQt6.QtWidgets import (
     QPushButton, QWidget, QMessageBox, QFrame
 )
 from PyQt6.QtCore import Qt, pyqtSignal
+from src.resources.design_system import (
+    Colors, Gradients, Radii, Typography,
+    pill_button_primary, pill_button_secondary, pill_badge, rounded_input
+)
+
 
 class SetPasswordDialog(QDialog):
     """Modern modal dialog to set or modify password protection for a tab."""
-    
+
     def __init__(self, tab_title="", parent=None):
         super().__init__(parent)
         self.setWindowTitle("Protect Tab with Password")
@@ -19,58 +25,22 @@ class SetPasswordDialog(QDialog):
         self.setup_ui()
 
     def setup_ui(self):
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #121620;
-                color: #FFFFFF;
-                border: 1px solid #283347;
-                border-radius: 16px;
-            }
-            QLabel.header-title {
-                font-size: 16px;
+        self.setStyleSheet(f"""
+            QDialog {{
+                background: {Gradients.SURFACE_DIALOG};
+                color: {Colors.TEXT_PRIMARY};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.LG};
+            }}
+            QLabel.header-title {{
+                font-size: {Typography.SIZE_SUBTITLE};
                 font-weight: 700;
-                color: #38BDF8;
-            }
-            QLabel.desc-text {
+                color: {Colors.ACCENT_CYAN};
+            }}
+            QLabel.desc-text {{
                 font-size: 13px;
-                color: #94A3B8;
-            }
-            QLineEdit {
-                background-color: #0A0D14;
-                border: 1px solid #283347;
-                border-radius: 10px;
-                padding: 10px 14px;
-                color: #FFFFFF;
-                font-size: 14px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #38BDF8;
-                background-color: #0F131D;
-            }
-            QPushButton.primary-btn {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0284C7, stop:1 #38BDF8);
-                color: #0A0D14;
-                font-weight: 700;
-                font-size: 13px;
-                border-radius: 10px;
-                padding: 10px 20px;
-                border: none;
-            }
-            QPushButton.primary-btn:hover {
-                background: #38BDF8;
-            }
-            QPushButton.cancel-btn {
-                background-color: #1E2535;
-                color: #94A3B8;
-                font-weight: 600;
-                border-radius: 10px;
-                padding: 10px 18px;
-                border: 1px solid #2B3449;
-            }
-            QPushButton.cancel-btn:hover {
-                background-color: #273045;
-                color: #FFFFFF;
-            }
+                color: {Colors.TEXT_SECONDARY};
+            }}
         """)
 
         layout = QVBoxLayout(self)
@@ -88,8 +58,8 @@ class SetPasswordDialog(QDialog):
         desc.setWordWrap(True)
         desc.setTextFormat(Qt.TextFormat.RichText)
         desc.setText(
-            f"<div style='color:#94A3B8; font-size:13px; margin-bottom: 6px;'>"
-            f"Set a password or PIN for tab: <b>\"{safe_title}\"</b><br><br>"
+            f"<div style='color:{Colors.TEXT_SECONDARY}; font-size:13px; margin-bottom: 6px;'>"
+            f"Set a password or PIN for tab: <b style='color:#FFFFFF;'>\"{safe_title}\"</b><br><br>"
             f"Contents will be completely hidden behind an encrypted lock screen until unlocked."
             f"</div>"
         )
@@ -98,23 +68,30 @@ class SetPasswordDialog(QDialog):
         self.input_pwd = QLineEdit(self)
         self.input_pwd.setEchoMode(QLineEdit.EchoMode.Password)
         self.input_pwd.setPlaceholderText("Enter password or PIN...")
+        self.input_pwd.setStyleSheet(rounded_input(38, Radii.SM))
         layout.addWidget(self.input_pwd)
 
         self.input_confirm = QLineEdit(self)
         self.input_confirm.setEchoMode(QLineEdit.EchoMode.Password)
         self.input_confirm.setPlaceholderText("Confirm password or PIN...")
+        self.input_confirm.setStyleSheet(rounded_input(38, Radii.SM))
         layout.addWidget(self.input_confirm)
 
         btn_box = QHBoxLayout()
         btn_box.setSpacing(12)
-        
+
         cancel_btn = QPushButton("Cancel", self)
-        cancel_btn.setProperty("class", "cancel-btn")
+        cancel_btn.setStyleSheet(pill_button_secondary(height=36))
         cancel_btn.clicked.connect(self.reject)
         btn_box.addWidget(cancel_btn)
 
         save_btn = QPushButton("Protect && Lock", self)
-        save_btn.setProperty("class", "primary-btn")
+        save_btn.setStyleSheet(pill_button_primary(
+            gradient=Gradients.CYBER_CYAN,
+            gradient_hover=Gradients.CYBER_CYAN_HOVER,
+            gradient_pressed=Gradients.CYBER_CYAN_PRESSED,
+            height=36
+        ))
         save_btn.clicked.connect(self.on_save)
         btn_box.addWidget(save_btn)
 
@@ -133,6 +110,7 @@ class SetPasswordDialog(QDialog):
         self.password = pwd
         self.accept()
 
+
 class LockedTabOverlay(QWidget):
     """Ultra-modern Obsidian & Cyber lock screen displayed over protected tabs."""
     unlocked = pyqtSignal()
@@ -144,67 +122,41 @@ class LockedTabOverlay(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #0A0D14;
-            }
-            #lock_card {
-                background-color: #131824;
-                border: 1px solid #232D40;
-                border-radius: 20px;
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: {Colors.BG_CANVAS};
+            }}
+            #lock_card {{
+                background: {Gradients.SURFACE_CARD};
+                border: 1px solid {Colors.BORDER_DEFAULT};
+                border-radius: {Radii.XL};
                 padding: 36px 40px;
                 max-width: 440px;
-            }
-            QLabel.icon-shield {
+            }}
+            QLabel.icon-shield {{
                 font-size: 56px;
-            }
-            QLabel.lock-title {
+            }}
+            QLabel.lock-title {{
                 font-size: 22px;
                 font-weight: 800;
-                color: #F8FAFC;
+                color: {Colors.TEXT_PRIMARY};
                 margin-top: 4px;
-            }
-            QLabel.lock-subtitle {
+            }}
+            QLabel.lock-subtitle {{
                 font-size: 13px;
-                color: #94A3B8;
+                color: {Colors.TEXT_SECONDARY};
                 margin-bottom: 8px;
-            }
-            QLineEdit#pwd_box {
-                background-color: #0A0D14;
-                border: 1px solid #38BDF8;
-                border-radius: 12px;
-                padding: 12px 18px;
-                color: #FFFFFF;
-                font-size: 15px;
-                selection-background-color: #38BDF8;
-            }
-            QLineEdit#pwd_box:focus {
-                border: 2px solid #38BDF8;
-                background-color: #0E131E;
-            }
-            QPushButton.unlock-btn {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0284C7, stop:1 #38BDF8);
-                color: #0A0D14;
-                font-weight: 800;
-                font-size: 14px;
-                border-radius: 12px;
-                padding: 12px 28px;
-                border: none;
-            }
-            QPushButton.unlock-btn:hover {
-                background: #38BDF8;
-            }
-            QPushButton.unlock-btn:pressed {
-                background: #0284C7;
-            }
-            QLabel.badge-status {
-                color: #38BDF8;
-                background-color: #17283C;
-                border-radius: 8px;
-                padding: 4px 10px;
+            }}
+            QLabel.badge-status {{
+                color: {Colors.ACCENT_CYAN};
+                background-color: {Colors.SURFACE_3};
+                border: 1px solid {Colors.ACCENT_CYAN};
+                border-radius: {Radii.PILL};
+                padding: 4px 14px;
                 font-size: 11px;
                 font-weight: 700;
-            }
+                letter-spacing: 0.5px;
+            }}
         """)
 
         layout = QVBoxLayout(self)
@@ -241,11 +193,18 @@ class LockedTabOverlay(QWidget):
         self.input_pwd.setObjectName("pwd_box")
         self.input_pwd.setEchoMode(QLineEdit.EchoMode.Password)
         self.input_pwd.setPlaceholderText("Enter password / PIN...")
+        self.input_pwd.setStyleSheet(rounded_input(42, Radii.SM))
         self.input_pwd.returnPressed.connect(self.on_unlock)
         c_layout.addWidget(self.input_pwd)
 
         unlock_btn = QPushButton("Unlock Session", card)
-        unlock_btn.setProperty("class", "unlock-btn")
+        unlock_btn.setStyleSheet(pill_button_primary(
+            gradient=Gradients.CYBER_CYAN,
+            gradient_hover=Gradients.CYBER_CYAN_HOVER,
+            gradient_pressed=Gradients.CYBER_CYAN_PRESSED,
+            height=40,
+            font_size="13.5px"
+        ))
         unlock_btn.clicked.connect(self.on_unlock)
         c_layout.addWidget(unlock_btn)
 
