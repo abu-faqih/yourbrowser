@@ -8,7 +8,7 @@ import uuid
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabBar, QLineEdit, QPushButton, QStackedWidget,
-    QMessageBox, QProgressBar, QLabel, QFrame
+    QMessageBox, QProgressBar, QLabel, QFrame, QMenu
 )
 from PyQt6.QtCore import QUrl, Qt, QTimer, QSize
 from PyQt6.QtGui import QIcon
@@ -123,9 +123,12 @@ class YourBrowserWindow(QMainWindow):
         self.tab_bar = QTabBar(tab_strip_widget)
         self.tab_bar.setTabsClosable(True)
         self.tab_bar.setMovable(True)
+        self.tab_bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tab_bar.customContextMenuRequested.connect(self.on_tab_context_menu)
         self.tab_bar.tabCloseRequested.connect(self.close_tab)
         self.tab_bar.currentChanged.connect(self.on_tab_changed)
         tab_strip_layout.addWidget(self.tab_bar)
+
 
         # Integrated "+" New Tab Button right next to the tabs
         self.new_tab_btn = QPushButton(tab_strip_widget)
@@ -442,3 +445,78 @@ class YourBrowserWindow(QMainWindow):
                     self, "Tab Protected",
                     "Tab has been locked and encrypted with your password.\nEnter your password anytime to unlock."
                 )
+
+    def on_tab_context_menu(self, pos):
+        """Display modern context menu when right-clicking on any tab."""
+        index = self.tab_bar.tabAt(pos)
+        if index < 0 or index >= self.stacked_widget.count():
+            return
+
+        container = self.stacked_widget.widget(index)
+        if not container:
+            return
+
+        menu = QMenu(self)
+
+        # 1. Reload Tab
+        reload_action = menu.addAction(create_svg_icon("refresh", "#CBD5E1", 15), "Reload Tab")
+        reload_action.triggered.connect(lambda: container.web_view.reload())
+
+        # 2. Duplicate Tab
+        dup_action = menu.addAction(create_svg_icon("plus", "#CBD5E1", 15), "Duplicate Tab")
+        dup_action.triggered.connect(lambda: self.add_new_tab(container.web_view.url().toString()))
+
+        menu.addSeparator()
+
+        # 3. Lock / Unlock Tab (Primary Requested Feature)
+        if container.is_locked:
+            lock_action = menu.addAction(create_svg_icon("unlock", "#38BDF8", 16), "🔓 Unlock Tab...")
+            lock_action.triggered.connect(lambda: self.unlock_tab_by_index(index))
+        else:
+            lock_action = menu.addAction(create_svg_icon("lock", "#38BDF8", 16), "🔒 Lock Tab with Password...")
+            lock_action.triggered.connect(lambda: self.lock_tab_by_index(index))
+
+        menu.addSeparator()
+
+        # 4. Close Tab
+        close_action = menu.addAction(create_svg_icon("close", "#EF4444", 15), "Close Tab")
+        close_action.triggered.connect(lambda: self.close_tab(index))
+
+        # 5. Close Other Tabs
+        if self.tab_bar.count() > 1:
+            close_others_action = menu.addAction("Close Other Tabs")
+            close_others_action.triggered.connect(lambda: self.close_other_tabs(index))
+
+        menu.exec(self.tab_bar.mapToGlobal(pos))
+
+    def lock_tab_by_index(self, index):
+        """Prompt password dialog and lock tab at specific index."""
+        if index < 0 or index >= self.stacked_widget.count():
+            return
+        container = self.stacked_widget.widget(index)
+        tab_title = self.tab_bar.tabText(index)
+        dlg = SetPasswordDialog(tab_title, self)
+        if dlg.exec() == SetPasswordDialog.DialogCode.Accepted and dlg.password:
+            self.security_manager.set_tab_password(container.tab_id, dlg.password)
+            container.lock_tab()
+            self.on_tab_changed(self.tab_bar.currentIndex())
+            self.on_title_changed(container.web_view.title(), container)
+            QMessageBox.information(
+                self, "Tab Protected",
+                "Tab has been locked and encrypted with password.\nEnter your password to unlock."
+            )
+
+    def unlock_tab_by_index(self, index):
+        """Focus unlock screen on locked tab."""
+        self.setCurrentIndex(index)
+        container = self.stacked_widget.widget(index)
+        if container and container.is_locked:
+            container.overlay.input_pwd.setFocus()
+
+    def close_other_tabs(self, keep_index):
+        """Close all tabs except the specified index."""
+        total = self.tab_bar.count()
+        for i in reversed(range(total)):
+            if i != keep_index:
+                self.close_tab(i)
+

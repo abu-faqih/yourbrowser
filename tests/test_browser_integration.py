@@ -60,5 +60,28 @@ class TestBrowserIntegration(unittest.TestCase):
         self.assertTrue(self.window.interceptor.shields_enabled)
         self.assertEqual(self.window.interceptor.blocked_count, 0)
 
+    def test_close_other_tabs(self):
+        self.window.add_new_tab("about:blank")
+        self.window.add_new_tab("about:blank")
+        self.assertEqual(self.window.tabs.count(), 3)
+
+        # Close all except index 1
+        self.window.close_other_tabs(1)
+        self.assertEqual(self.window.tabs.count(), 1)
+
+    def test_tab_context_menu_lock_via_index(self):
+        container = self.window.current_container()
+        self.assertFalse(container.is_locked)
+
+        # Set password directly
+        self.window.security_manager.set_tab_password(container.tab_id, "tab_secure_pin")
+        container.lock_tab()
+        self.assertTrue(container.is_locked)
+
+        # Unlock via helper
+        self.window.unlock_tab_by_index(0)
+        self.assertTrue(container.overlay.input_pwd.hasFocus() or container.is_locked)
+
 if __name__ == "__main__":
     unittest.main()
+

@@ -51,11 +51,13 @@ yourbrowser/
 - Sangat mudah menambahkan tombol baru, menu konteks, sidebar, sistem vault multi-profil, atau ekstensi kustom langsung di folder `src/ui/`.
 - Styling tampilan didefinisikan dalam `src/resources/style.py` dengan format CSS standar (*Qt Style Sheets*).
 
-### 2. Fitur Kunci Tab dengan Password (Tab Lock)
-- Klik tombol **🔒 Lock Tab** pada toolbar di sebelah address bar.
-- Masukkan kata sandi atau PIN untuk tab yang sedang aktif.
-- Tab akan langsung terkunci, judul tab diberi penanda `🔒`, dan konten halaman web digantikan oleh layar enkripsi modern.
-- Konten web baru dapat dilihat kembali setelah kata sandi diverifikasi dengan benar.
+### 2. Fitur Kunci Tab dengan Password (Tab Lock via Klik-Kanan & Toolbar)
+- **Klik Kanan pada Tab Mana Saja**: Klik kanan pada tab yang ingin dikunci, lalu pilih **🔒 Lock Tab with Password...**.
+- Masukkan kata sandi atau PIN untuk tab tersebut.
+- Tab akan langsung terkunci dengan ikon gembok `🔒`, dan konten halaman web digantikan oleh layar enkripsi *Cyber Obsidian*.
+- Untuk membuka kembali, klik kanan tab dan pilih **🔓 Unlock Tab...** atau masukkan kata sandi langsung pada layar kunci tab.
+- Tersedia pula menu klik kanan standar: *Reload Tab*, *Duplicate Tab*, *Close Tab*, dan *Close Other Tabs*.
+
 
 ### 3. Brave Shields & Pemblokir Iklan Agresif
 - Tombol **🛡️ Shields** menampilkan jumlah iklan/pelacak yang berhasil diblokir secara langsung.

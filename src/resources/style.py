@@ -224,4 +224,42 @@ QLabel#floating_link_tooltip {
     padding: 4px 10px;
     font-size: 11px;
 }
+
+/* ========================================================== */
+/* Modern Dark Context Menu (Tab Right-Click Menu)           */
+/* ========================================================== */
+QMenu {
+    background-color: #161A24;
+    border: 1px solid #293448;
+    border-radius: 12px;
+    padding: 6px;
+    color: #F1F5F9;
+    font-size: 13px;
+}
+
+QMenu::item {
+    padding: 8px 24px 8px 14px;
+    border-radius: 8px;
+    background-color: transparent;
+}
+
+QMenu::item:selected {
+    background-color: #242D3E;
+    color: #38BDF8;
+}
+
+QMenu::item:disabled {
+    color: #4B5563;
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: #232B3B;
+    margin: 5px 6px;
+}
+
+QMenu::icon {
+    padding-left: 6px;
+}
 """
+
