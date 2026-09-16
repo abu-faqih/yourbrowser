@@ -1,98 +1,90 @@
-# YourBrowser: Next-Gen Privacy Browser (Brave Engine Distribution)
+# YourBrowser: Modern Privacy Browser with Brave Shields & Tab Password Protection
 
 ## Ringkasan Proyek
-**YourBrowser** adalah peramban web (*web browser*) multi-platform generasi baru berbasis arsitektur **Brave Browser (Chromium Core)**. Browser ini dirancang dengan fokus privasi tingkat tinggi, proteksi pelacak agresif (*Brave Shields*), serta netralisasi total terhadap popup, popunder, dan penipuan klik (*click-hijacking*) pada situs-situs streaming modern.
+**YourBrowser** adalah peramban web (*web browser*) native generasi baru dengan antarmuka **Brave Obsidian Dark**, ditenagai oleh mesin peramban Chromium modern (*QtWebEngine Core*). Seluruh kode sumber aplikasi berada di repositori ini dan dirancang untuk dapat dikustomisasi (*full customizable*) oleh pengembang secara fleksibel, clean, dan modular.
 
-Proyek ini dirancang untuk multi-platform (**Linux**, **Windows**, dan **Android**), dengan fokus implementasi tahap pertama pada lingkungan **Linux**.
+Browser ini memiliki dua fitur unggulan yang dirancang khusus:
+1. **Brave Shields Native Panel & Aggressive Ad-Blocker**: Memblokir iklan, pelacak (*trackers*), dan skrip popunder secara instan di level peramban, dilengkapi tombol dropdown interaktif bertema Brave Lion dengan penghitung (*counter*) iklan yang diblokir secara *real-time*.
+2. **Tab Password Protection (Lock Tab)**: Kemampuan mengunci (*lock*) tab individual mana pun dengan kata sandi/PIN. Ketika tab dikunci, konten web disembunyikan sepenuhnya oleh layar kunci terenkripsi (*Obsidian Lock Screen*), dan hanya dapat dibuka dengan memasukkan kata sandi yang valid.
+
+---
+
+## Arsitektur & Struktur Kode Sumber
+
+Seluruh logika UI, manajemen tab, proteksi password, dan mesin peramban berada dalam folder `src/` sehingga Anda memiliki kontrol 100% untuk memodifikasi tampilan, menambahkan fitur profil, mengubah tema, maupun menyesuaikan perilaku web.
+
+```text
+yourbrowser/
+├── bin/
+│   └── yourbrowser                     # Executable launcher utama YourBrowser
+├── src/
+│   ├── app.py                          # Titik masuk utama aplikasi (Main Entry Point)
+│   ├── core/
+│   │   ├── adblock_engine.py           # Mesin penyaring request, anti-popup & anti-clickjacking
+│   │   └── security.py                 # Manajemen kriptografi password tab & profil (SHA-256 + Salt)
+│   ├── ui/
+│   │   ├── browser_window.py           # Jendela peramban utama (Tabs, Omnibox, Toolbar, WebViews)
+│   │   ├── shields_panel.py            # Dropdown popup panel interaktif Brave Shields
+│   │   └── lock_modal.py               # Dialog set password & overlay pengunci tab
+│   └── resources/
+│       └── style.py                    # Tema Brave Obsidian Dark (QSS / CSS)
+├── tests/
+│   ├── test_security.py                # Unit test verifikasi enkripsi password tab & profil
+│   ├── test_browser_integration.py     # Integration test UI, tabs, dan lock/unlock lifecycle
+│   └── test_stream_native.py           # Verifikasi pemutaran stream & pemblokiran popup di LK21
+├── desktop/
+│   └── yourbrowser.desktop             # Integrasi shortcut sistem desktop Linux
+├── assets/
+│   └── icons/                          # Ikon vektor resolusi tinggi YourBrowser
+│       └── yourbrowser.svg
+└── scripts/
+    └── install_desktop.sh              # Skrip instalasi shortcut desktop ke sistem
+```
 
 ---
 
 ## Fitur Utama
 
-1. **Brave Shields Native Integration**:
-   - Pemblokiran iklan agresif (*aggressive adblocking*) dan pemfilteran kosmetik elemen manipulatif.
-   - Proteksi sidik jari peramban (*strict fingerprinting protection*).
-   - Pemblokiran pelacak lintas-situs (*cross-site tracker blocking*).
+### 1. Kustomisasi Bebas & Kode Bersih (Full Extensibility)
+- Seluruh komponen UI ditulis menggunakan arsitektur modular PyQt6 + Chromium Content Engine.
+- Sangat mudah menambahkan tombol baru, menu konteks, sidebar, sistem vault multi-profil, atau ekstensi kustom langsung di folder `src/ui/`.
+- Styling tampilan didefinisikan dalam `src/resources/style.py` dengan format CSS standar (*Qt Style Sheets*).
 
-2. **YourBrowser Shield Booster (Anti-Popunder & Anti-Clickjacking)**:
-   - Injeksi otomatis di tingkat kernel peramban (*Manifest V3 Content Script & Service Worker*).
-   - Menetralkan jebakan `window.open`, *invisible banner overlays*, dan manipulasi event `click`/`mousedown` pada situs streaming.
-   - Pembersihan otomatis (*auto-purge*) terhadap iframe jaringan iklan liar.
-   - Deteksi dan penutupan instan tab popunder liar dari situs streaming.
+### 2. Fitur Kunci Tab dengan Password (Tab Lock)
+- Klik tombol **🔒 Lock Tab** pada toolbar di sebelah address bar.
+- Masukkan kata sandi atau PIN untuk tab yang sedang aktif.
+- Tab akan langsung terkunci, judul tab diberi penanda `🔒`, dan konten halaman web digantikan oleh layar enkripsi modern.
+- Konten web baru dapat dilihat kembali setelah kata sandi diverifikasi dengan benar.
 
-3. **Seamless Media Streaming**:
-   - Menjamin video streaming (HLS, DASH, Direct MP4 via Cloud Storage) dapat langsung diputar dengan suara (*unmuted* & audio jernih) tanpa tertahan oleh dialog atau popunder iklan.
-   - Teruji dan terverifikasi secara sempurna pada situs streaming agresif: `https://mamamas.xyz/this-party-dead-2026`.
-
-4. **Isolasi Data Profil Pengguna**:
-   - Menyimpan seluruh cache, riwayat, cookie, dan preferensi terpisah pada folder terdedikasi `~/.config/yourbrowser`.
+### 3. Brave Shields & Pemblokir Iklan Agresif
+- Tombol **🛡️ Shields** menampilkan jumlah iklan/pelacak yang berhasil diblokir secara langsung.
+- Mengklik tombol Shields membuka panel dropdown interaktif untuk mengaktifkan (*Shields UP*) atau menonaktifkan (*Shields DOWN*) proteksi.
+- Secara otomatis menetralkan jebakan `window.open` dan iklan klik (*popunder*) pada situs-situs film streaming.
 
 ---
 
-## Struktur Repositori
+## Panduan Penggunaan & Pengembangan
 
-```text
-yourbrowser/
-├── README.md                           # Dokumentasi peramban & panduan
-├── PRD.md                              # Product Requirements Document
-├── DESIGN_SYSTEM.md                    # Panduan visual dan design tokens
-├── bin/
-│   └── yourbrowser                     # Executable launcher utama YourBrowser
-├── config/
-│   └── policies.json                   # Kebijakan peramban terkelola (Anti-Popup, Anti-Metrics)
-├── extensions/
-│   └── shield-booster/                 # Ekstensi internal Shield Booster (Anti-popunder & clickjacking)
-│       ├── manifest.json
-│       ├── content.js                  # Main world interception
-│       ├── isolated_content.js         # Isolated world DOM cleaner
-│       └── background.js               # Service worker tab governor
-├── desktop/
-│   └── yourbrowser.desktop             # Integrasi desktop Linux (FreeDesktop standard)
-├── assets/
-│   └── icons/                          # Aset visual & logo vektor YourBrowser
-│       └── yourbrowser.svg
-└── scripts/
-    ├── install_desktop.sh              # Skrip instalasi shortcut desktop ke sistem
-    └── verify_stream.py                # Otomasi pengujian streaming & audit anti-popup
-```
-
----
-
-## Panduan Menjalankan (Linux)
-
-### 1. Menjalankan Langsung via Terminal
+### 1. Menjalankan Peramban
 ```bash
-# Meluncurkan browser dengan profil default YourBrowser
+# Meluncurkan YourBrowser langsung dari terminal
 ./bin/yourbrowser
 
-# Membuka langsung URL spesifik
+# Atau membuka langsung URL spesifik
 ./bin/yourbrowser https://mamamas.xyz/this-party-dead-2026
-
-# Mode Incognito / Private
-./bin/yourbrowser --incognito
 ```
 
-### 2. Memasang ke Menu Aplikasi Desktop Linux
+### 2. Menginstal Shortcut ke Menu Desktop Linux
 ```bash
 ./scripts/install_desktop.sh
 ```
-Setelah dijalankan, aplikasi akan terdaftar di menu sistem Anda (misal Linux Mint Menu / GNOME / KDE) dengan nama **YourBrowser**.
+Aplikasi akan langsung muncul di menu aplikasi Linux Mint / Ubuntu Anda dengan nama **YourBrowser**.
 
-### 3. Otomasi Pengujian Streaming & Anti-Popup
-Untuk memverifikasi bahwa browser memutar video streaming tanpa ada satupun popup iklan:
+### 3. Menjalankan Seluruh Pengujian (Test Suite)
 ```bash
-python3 ./scripts/verify_stream.py
+# Menjalankan pengujian keamanan & integrasi browser
+python3 -m unittest discover tests/
+
+# Menjalankan verifikasi streaming video pada situs target (LK21)
+python3 tests/test_stream_native.py
 ```
-Skrip ini akan memvalidasi secara otomatis:
-- Pemutaran stream berjalan lancar (`currentTime` bertambah).
-- Durasi media terdeteksi (~98 menit).
-- Audio bersuara aktif (`muted: false`, `volume: 1`).
-- Jumlah tab/window popup iklan yang terbuka adalah **0** (bersih total).
-
----
-
-## Roadmap Multi-Platform
-
-* **Tahap 1 (Selesai)**: Linux Desktop (Mint/Ubuntu/Debian) - Distribusi Brave Engine mandiri, Shield Booster, integrasi desktop, dan verifikasi streaming sempurna.
-* **Tahap 2**: Windows Desktop - Pengemasan executable wrapper (`yourbrowser.exe`), installer InnoSetup/MSI, dan integrasi Registry browser default.
-* **Tahap 3**: Android Mobile - Arsitektur Brave-core / GeckoView Android wrapper dengan porting modul Shield Booster ke WebView / WebExtension API mobile.
