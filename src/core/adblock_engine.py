@@ -6,7 +6,6 @@ Intercepts network requests, blocks trackers, popups, and clickjacking traps.
 from PyQt6.QtWebEngineCore import QWebEngineUrlRequestInterceptor, QWebEngineScript
 from PyQt6.QtCore import QObject, pyqtSignal, QUrl
 
-# Comprehensive list of ad, tracker, popunder, and malware domain signatures
 AD_BLOCK_RULES = {
     "doubleclick.net", "googlesyndication.com", "google-analytics.com",
     "adservice.google.com", "pagead2.googlesyndication.com", "adnxs.com",
@@ -18,29 +17,14 @@ AD_BLOCK_RULES = {
     "creative", "clickadu", "adx", "adriver", "smartadserver"
 }
 
-# Content script to neutralize popunders and click hijacking at document_start
 ANTI_POPUP_INJECTION = """
 (() => {
     'use strict';
     
-    // 1. Neutralize window.open
+    // 1. Neutralize window.open traps
     const origOpen = window.open;
     window.open = function(url, target, features) {
-        if (!url || url === 'about:blank' || String(url).startsWith('javascript:')) {
-            console.warn('[YourBrowser Shield] Blocked blank popup');
-            return null;
-        }
-        try {
-            const parsed = new URL(url, window.location.href);
-            const ads = ['ad', 'pop', 'bet', 'click', 'track', 'banner', 'affiliate', 'promo'];
-            if (ads.some(k => parsed.hostname.includes(k) || parsed.pathname.includes(k))) {
-                console.warn('[YourBrowser Shield] Blocked ad popup URL:', parsed.href);
-                return null;
-            }
-        } catch (e) {
-            return null;
-        }
-        console.info('[YourBrowser Shield] Handled popup link:', url);
+        console.warn('[YourBrowser Shield] Blocked popup window.open attempt:', url);
         return null;
     };
 
@@ -59,21 +43,41 @@ ANTI_POPUP_INJECTION = """
         }
     }, true);
 
-    // 3. Remove high z-index overlay ads
-    function removeOverlays() {
-        const els = document.querySelectorAll('div[style*="z-index"]');
-        els.forEach(el => {
-            const z = parseInt(window.getComputedStyle(el).zIndex, 10);
-            if (z > 999 && !el.querySelector('video, iframe')) {
-                const rect = el.getBoundingClientRect();
-                if (rect.width > window.innerWidth * 0.7 && rect.height > window.innerHeight * 0.7) {
-                    el.remove();
-                }
+    // 3. Auto-bypass stream click-traps & fake overlays (e.g. "Klik Di Mana Saja untuk Memulai Film")
+    function bypassStreamTraps() {
+        // Target annoying LK21 overlay banner
+        const overlays = document.querySelectorAll('div, section, p, span, a');
+        overlays.forEach(el => {
+            const text = el.textContent || '';
+            if (text.includes('Klik Di Mana Saja untuk Memulai Film') || text.includes('THIS PLAYER CONTAINS ADS')) {
+                const parentBox = el.closest('div[style*="position"], .player-area, .main-player') || el;
+                el.style.display = 'none';
+                console.log('[YourBrowser Shield] Purged stream ad trap banner');
             }
         });
+
+        // Trigger underlying video or play button
+        const playBtn = document.getElementById('customPlayButton') || 
+                        document.querySelector('.vjs-big-play-button, button.play, .play-button');
+        if (playBtn && playBtn.offsetParent !== null) {
+            console.log('[YourBrowser Shield] Triggered genuine play button');
+            playBtn.click();
+        }
+
+        const v = document.querySelector('video');
+        if (v && v.paused) {
+            v.muted = false;
+            v.volume = 1.0;
+            v.play().catch(e => {});
+        }
     }
-    window.addEventListener('DOMContentLoaded', removeOverlays);
-    setInterval(removeOverlays, 1500);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        bypassStreamTraps();
+        setTimeout(bypassStreamTraps, 1000);
+        setTimeout(bypassStreamTraps, 2500);
+    });
+    setInterval(bypassStreamTraps, 3000);
 
     // 4. Auto unmute media if video starts
     document.addEventListener('play', (e) => {
@@ -106,7 +110,6 @@ class ShieldUrlInterceptor(QWebEngineUrlRequestInterceptor):
         if not self.shields_enabled:
             return
 
-        # Check if requested URL matches known ad or tracker patterns
         is_ad = any(rule in host or rule in url for rule in AD_BLOCK_RULES)
         
         if is_ad:

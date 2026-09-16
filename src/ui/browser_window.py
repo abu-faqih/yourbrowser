@@ -1,14 +1,14 @@
 """
 YourBrowser UI - Main Browser Window
 Ultra-Modern, production-grade Chromium Browser with Brave Obsidian aesthetics,
-Brave Shields Engine, and Tab Password Protection.
+Top Tab Strip, Capsule Omnibox, Brave Shields Engine, and Tab Password Protection.
 """
 
 import uuid
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTabWidget, QLineEdit, QPushButton, QStackedWidget,
-    QStatusBar, QMessageBox, QProgressBar, QLabel
+    QTabBar, QLineEdit, QPushButton, QStackedWidget,
+    QMessageBox, QProgressBar, QLabel, QFrame
 )
 from PyQt6.QtCore import QUrl, Qt, QTimer, QSize
 from PyQt6.QtGui import QIcon
@@ -33,12 +33,11 @@ class CustomWebEnginePage(QWebEnginePage):
         self.browser_window = browser_window
 
     def createWindow(self, window_type):
-        # Block popups/new windows if triggered automatically by ad networks
         if self.browser_window.interceptor.shields_enabled:
             print("[YourBrowser Shield] Blocked window.open popup attempt")
             return None
-        new_tab = self.browser_window.add_new_tab()
-        return new_tab.page()
+        new_view = self.browser_window.add_new_tab()
+        return new_view.page()
 
 class TabContainer(QWidget):
     """Container holding QWebEngineView and its LockedTabOverlay."""
@@ -112,14 +111,44 @@ class YourBrowserWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # 1. Navigation Toolbar
+        # ==========================================================
+        # 1. TOP TAB STRIP (At the very top, just like Brave/Chrome)
+        # ==========================================================
+        tab_strip_widget = QWidget(self)
+        tab_strip_widget.setObjectName("top_tab_strip")
+        tab_strip_layout = QHBoxLayout(tab_strip_widget)
+        tab_strip_layout.setContentsMargins(8, 6, 8, 0)
+        tab_strip_layout.setSpacing(4)
+
+        self.tab_bar = QTabBar(tab_strip_widget)
+        self.tab_bar.setTabsClosable(True)
+        self.tab_bar.setMovable(True)
+        self.tab_bar.tabCloseRequested.connect(self.close_tab)
+        self.tab_bar.currentChanged.connect(self.on_tab_changed)
+        tab_strip_layout.addWidget(self.tab_bar)
+
+        # Integrated "+" New Tab Button right next to the tabs
+        self.new_tab_btn = QPushButton(tab_strip_widget)
+        self.new_tab_btn.setObjectName("new_tab_btn")
+        self.new_tab_btn.setIcon(create_svg_icon("plus", "#94A3B8", 16))
+        self.new_tab_btn.setIconSize(QSize(16, 16))
+        self.new_tab_btn.setToolTip("Open a new tab (Ctrl+T)")
+        self.new_tab_btn.clicked.connect(lambda: self.add_new_tab())
+        tab_strip_layout.addWidget(self.new_tab_btn)
+        tab_strip_layout.addStretch()
+
+        main_layout.addWidget(tab_strip_widget)
+
+        # ==========================================================
+        # 2. NAVIGATION TOOLBAR (Directly below Tab Bar)
+        # ==========================================================
         nav_toolbar = QWidget(self)
         nav_toolbar.setObjectName("nav_toolbar")
         nav_layout = QHBoxLayout(nav_toolbar)
-        nav_layout.setContentsMargins(10, 8, 10, 8)
+        nav_layout.setContentsMargins(12, 6, 12, 6)
         nav_layout.setSpacing(8)
 
-        # Crisp Vector Nav Buttons
+        # Navigation Action Buttons
         self.back_btn = QPushButton(nav_toolbar)
         self.back_btn.setProperty("class", "nav-btn")
         self.back_btn.setIcon(create_svg_icon("arrow_left", "#94A3B8", 18))
@@ -152,18 +181,31 @@ class YourBrowserWindow(QMainWindow):
         self.home_btn.clicked.connect(lambda: self.navigate_url("https://search.brave.com"))
         nav_layout.addWidget(self.home_btn)
 
-        # SSL Security Badge
-        self.ssl_badge = QLabel("🔒", nav_toolbar)
-        self.ssl_badge.setObjectName("ssl_badge")
-        self.ssl_badge.setToolTip("Connection is secure (HTTPS)")
-        nav_layout.addWidget(self.ssl_badge)
+        # Integrated Capsule Omnibox Frame
+        omnibox_capsule = QFrame(nav_toolbar)
+        omnibox_capsule.setObjectName("omnibox_capsule")
+        capsule_layout = QHBoxLayout(omnibox_capsule)
+        capsule_layout.setContentsMargins(6, 0, 8, 0)
+        capsule_layout.setSpacing(6)
 
-        # Omnibox Address Bar
-        self.omnibox = QLineEdit(nav_toolbar)
-        self.omnibox.setObjectName("omnibox")
+        self.ssl_icon_lbl = QLabel("🔒", omnibox_capsule)
+        self.ssl_icon_lbl.setObjectName("ssl_icon_lbl")
+        capsule_layout.addWidget(self.ssl_icon_lbl)
+
+        self.omnibox = QLineEdit(omnibox_capsule)
+        self.omnibox.setObjectName("omnibox_input")
         self.omnibox.setPlaceholderText("Search with Brave or enter web address...")
         self.omnibox.returnPressed.connect(self.on_omnibox_return)
-        nav_layout.addWidget(self.omnibox, stretch=1)
+        capsule_layout.addWidget(self.omnibox, stretch=1)
+
+        self.bookmark_btn = QPushButton(omnibox_capsule)
+        self.bookmark_btn.setObjectName("bookmark_btn")
+        self.bookmark_btn.setIcon(create_svg_icon("star", "#64748B", 16))
+        self.bookmark_btn.setIconSize(QSize(16, 16))
+        self.bookmark_btn.setToolTip("Bookmark this tab")
+        capsule_layout.addWidget(self.bookmark_btn)
+
+        nav_layout.addWidget(omnibox_capsule, stretch=1)
 
         # Brave Shields Lion Button
         self.shield_btn = QPushButton("🛡️ 0 Blocked", nav_toolbar)
@@ -172,25 +214,24 @@ class YourBrowserWindow(QMainWindow):
         self.shield_btn.clicked.connect(self.show_shields_popup)
         nav_layout.addWidget(self.shield_btn)
 
-        # Tab Lock Button
+        # Cyber Tab Lock Button
         self.lock_btn = QPushButton("🔒 Lock Tab", nav_toolbar)
         self.lock_btn.setObjectName("lock_btn")
         self.lock_btn.setToolTip("Protect this tab with password or PIN")
         self.lock_btn.clicked.connect(self.on_lock_current_tab)
         nav_layout.addWidget(self.lock_btn)
 
-        # New Tab Button (+)
-        self.new_tab_btn = QPushButton(nav_toolbar)
-        self.new_tab_btn.setObjectName("new_tab_btn")
-        self.new_tab_btn.setIcon(create_svg_icon("plus", "#94A3B8", 16))
-        self.new_tab_btn.setIconSize(QSize(16, 16))
-        self.new_tab_btn.setToolTip("Open a new tab (Ctrl+T)")
-        self.new_tab_btn.clicked.connect(lambda: self.add_new_tab())
-        nav_layout.addWidget(self.new_tab_btn)
+        # Menu Button (⋮)
+        self.menu_btn = QPushButton(nav_toolbar)
+        self.menu_btn.setProperty("class", "nav-btn")
+        self.menu_btn.setIcon(create_svg_icon("menu", "#94A3B8", 18))
+        self.menu_btn.setIconSize(QSize(18, 18))
+        self.menu_btn.setToolTip("Customize and control YourBrowser")
+        nav_layout.addWidget(self.menu_btn)
 
         main_layout.addWidget(nav_toolbar)
 
-        # Subtle Neon Loading Progress Bar
+        # Ultra-Thin Neon Loading Progress Bar
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setFixedHeight(2)
         self.progress_bar.setTextVisible(False)
@@ -206,17 +247,37 @@ class YourBrowserWindow(QMainWindow):
         self.progress_bar.hide()
         main_layout.addWidget(self.progress_bar)
 
-        # 2. Tabs Widget
-        self.tabs = QTabWidget(self)
-        self.tabs.setTabsClosable(True)
-        self.tabs.tabCloseRequested.connect(self.close_tab)
-        self.tabs.currentChanged.connect(self.on_tab_changed)
-        main_layout.addWidget(self.tabs)
+        # ==========================================================
+        # 3. WEB CONTENT AREA (Full-screen viewport stacked widget)
+        # ==========================================================
+        self.stacked_widget = QStackedWidget(self)
+        main_layout.addWidget(self.stacked_widget)
 
-        # 3. Status Bar
-        self.status_bar = QStatusBar(self)
-        self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("YourBrowser Ready • Brave Shields Active • Strict Privacy Protection")
+        # Compatibility alias for unit tests
+        self.tabs = self
+
+    # Compatibility methods to maintain identical API with QTabWidget
+    def count(self):
+        return self.tab_bar.count()
+
+    def currentIndex(self):
+        return self.tab_bar.currentIndex()
+
+    def currentWidget(self):
+        return self.stacked_widget.currentWidget()
+
+    def widget(self, index):
+        return self.stacked_widget.widget(index)
+
+    def tabText(self, index):
+        return self.tab_bar.tabText(index)
+
+    def setTabText(self, index, text):
+        self.tab_bar.setTabText(index, text)
+
+    def setCurrentIndex(self, index):
+        self.tab_bar.setCurrentIndex(index)
+        self.stacked_widget.setCurrentIndex(index)
 
     def add_new_tab(self, url="https://search.brave.com"):
         """Create and append a new modern browser tab."""
@@ -235,14 +296,16 @@ class YourBrowserWindow(QMainWindow):
         page = CustomWebEnginePage(self.profile, self, view)
         view.setPage(page)
 
-        container = TabContainer(tab_id, view, self.security_manager, self.tabs)
+        container = TabContainer(tab_id, view, self.security_manager, self.stacked_widget)
 
         view.urlChanged.connect(lambda qurl: self.on_url_changed(qurl, container))
         view.titleChanged.connect(lambda title: self.on_title_changed(title, container))
         view.loadProgress.connect(self.on_load_progress)
 
-        index = self.tabs.addTab(container, "New Tab")
-        self.tabs.setCurrentIndex(index)
+        # Add to TabBar and StackedWidget
+        index = self.tab_bar.addTab(create_svg_icon("tab_globe", "#94A3B8", 14), "New Tab")
+        self.stacked_widget.addWidget(container)
+        self.setCurrentIndex(index)
 
         if url:
             if not url.startswith("http://") and not url.startswith("https://") and not url.startswith("about:"):
@@ -252,24 +315,29 @@ class YourBrowserWindow(QMainWindow):
         return view
 
     def close_tab(self, index):
-        if self.tabs.count() > 1:
-            widget = self.tabs.widget(index)
-            self.tabs.removeTab(index)
+        if self.tab_bar.count() > 1:
+            widget = self.stacked_widget.widget(index)
+            self.tab_bar.removeTab(index)
+            self.stacked_widget.removeWidget(widget)
             widget.deleteLater()
         else:
             self.add_new_tab()
-            widget = self.tabs.widget(0)
-            self.tabs.removeTab(0)
+            widget = self.stacked_widget.widget(0)
+            self.tab_bar.removeTab(0)
+            self.stacked_widget.removeWidget(widget)
             widget.deleteLater()
 
     def current_container(self) -> TabContainer:
-        return self.tabs.currentWidget()
+        return self.stacked_widget.currentWidget()
 
     def current_view(self) -> QWebEngineView:
         container = self.current_container()
         return container.web_view if container else None
 
     def on_tab_changed(self, index):
+        if index < 0 or index >= self.stacked_widget.count():
+            return
+        self.stacked_widget.setCurrentIndex(index)
         container = self.current_container()
         if container:
             if container.is_locked:
@@ -281,36 +349,36 @@ class YourBrowserWindow(QMainWindow):
                     font-weight: 700;
                 """)
                 self.omnibox.setText("🔒 [Encrypted Tab Session]")
-                self.ssl_badge.setText("🔒")
+                self.ssl_icon_lbl.setText("🔒")
             else:
                 self.lock_btn.setText("🔒 Lock Tab")
                 self.lock_btn.setStyleSheet("")
                 qurl = container.web_view.url()
                 url_str = qurl.toString() if not qurl.isEmpty() else ""
                 self.omnibox.setText(url_str)
-                self.ssl_badge.setText("🔒" if url_str.startswith("https://") else "🌐")
+                self.ssl_icon_lbl.setText("🔒" if url_str.startswith("https://") else "🌐")
 
     def on_url_changed(self, qurl, container):
         if container == self.current_container() and not container.is_locked:
             url_str = qurl.toString()
             self.omnibox.setText(url_str)
-            self.ssl_badge.setText("🔒" if url_str.startswith("https://") else "🌐")
+            self.ssl_icon_lbl.setText("🔒" if url_str.startswith("https://") else "🌐")
 
     def on_title_changed(self, title, container):
-        index = self.tabs.indexOf(container)
+        index = self.stacked_widget.indexOf(container)
         if index != -1:
             lock_prefix = "🔒 " if container.is_locked else ""
-            display_title = (title[:20] + "...") if len(title) > 20 else (title or "New Tab")
-            self.tabs.setTabText(index, lock_prefix + display_title)
+            display_title = (title[:18] + "...") if len(title) > 18 else (title or "New Tab")
+            icon = create_svg_icon("lock" if container.is_locked else "tab_globe", "#38BDF8" if container.is_locked else "#94A3B8", 14)
+            self.tab_bar.setTabIcon(index, icon)
+            self.tab_bar.setTabText(index, lock_prefix + display_title)
 
     def on_load_progress(self, progress):
         if progress < 100:
             self.progress_bar.show()
             self.progress_bar.setValue(progress)
-            self.status_bar.showMessage(f"Loading page... {progress}%")
         else:
             self.progress_bar.hide()
-            self.status_bar.showMessage("YourBrowser Ready • Brave Shields Active", 3000)
 
     def on_omnibox_return(self):
         text = self.omnibox.text().strip()
@@ -362,11 +430,11 @@ class YourBrowserWindow(QMainWindow):
             overlay = container.overlay
             overlay.input_pwd.setFocus()
         else:
-            dlg = SetPasswordDialog(self.tabs.tabText(self.tabs.currentIndex()), self)
+            dlg = SetPasswordDialog(self.tab_bar.tabText(self.tab_bar.currentIndex()), self)
             if dlg.exec() == SetPasswordDialog.DialogCode.Accepted and dlg.password:
                 self.security_manager.set_tab_password(container.tab_id, dlg.password)
                 container.lock_tab()
-                self.on_tab_changed(self.tabs.currentIndex())
+                self.on_tab_changed(self.tab_bar.currentIndex())
                 self.on_title_changed(container.web_view.title(), container)
                 QMessageBox.information(
                     self, "Tab Protected",
