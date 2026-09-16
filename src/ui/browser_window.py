@@ -27,6 +27,7 @@ from src.core.adblock_engine import ShieldUrlInterceptor, ANTI_POPUP_INJECTION
 from src.core.security import SecurityManager
 from src.core.browser_data import BookmarkManager, HistoryManager, SettingsManager
 from src.core.download_manager import DownloadManager
+from src.core.profile_manager import ProfileManager
 from src.ui.shields_panel import ShieldsPopup
 from src.ui.lock_modal import SetPasswordDialog, LockedTabOverlay
 from src.ui.bookmarks_bar import BookmarksBar
@@ -92,19 +93,39 @@ class TabContainer(QWidget):
 class YourBrowserWindow(QMainWindow):
     """Main Application Window for YourBrowser."""
 
-    def __init__(self, initial_url="https://search.brave.com", is_incognito=False):
+    def __init__(
+        self,
+        initial_url="https://search.brave.com",
+        is_incognito=False,
+        profile_data=None,
+        dashboard_window=None,
+        profile_manager=None
+    ):
         super().__init__()
         self.is_incognito = is_incognito
-        title_prefix = "🕶️ Private Window - " if self.is_incognito else ""
+        self.profile_data = profile_data or {}
+        self.profile_id = self.profile_data.get("id")
+        self.dashboard_window = dashboard_window
+        self.profile_manager = profile_manager or ProfileManager()
+
+        profile_name = self.profile_data.get("name")
+        title_prefix = "🕶️ Private Window - " if self.is_incognito else (f"[{profile_name}] " if profile_name else "")
         self.setWindowTitle(f"{title_prefix}YourBrowser - Modern Privacy Browser")
         self.resize(1360, 850)
         self.setStyleSheet(BRAVE_THEME_QSS)
 
-        # Core Managers
+        # Core Managers with Profile Isolation
+        if self.profile_id and not self.is_incognito:
+            profile_dir = self.profile_manager.get_profile_dir(self.profile_id)
+            self.bookmark_manager = BookmarkManager(base_dir=profile_dir)
+            self.history_manager = HistoryManager(base_dir=profile_dir)
+            self.settings_manager = SettingsManager(base_dir=profile_dir)
+        else:
+            self.bookmark_manager = BookmarkManager()
+            self.history_manager = HistoryManager()
+            self.settings_manager = SettingsManager()
+
         self.security_manager = SecurityManager()
-        self.bookmark_manager = BookmarkManager()
-        self.history_manager = HistoryManager()
-        self.settings_manager = SettingsManager()
         self.download_manager = DownloadManager()
 
         # Closed tabs stack for Ctrl+Shift+T
@@ -116,8 +137,23 @@ class YourBrowserWindow(QMainWindow):
         self.setup_ui()
         self.setup_shortcuts()
 
-        # Add initial tab
-        self.add_new_tab(initial_url)
+        # Restore saved tabs or add initial tab
+        self.restore_or_init_tabs(initial_url)
+
+    def restore_or_init_tabs(self, fallback_url="https://search.brave.com"):
+        """Restore persisted session tabs for this profile, or open fallback URL."""
+        if self.profile_id and not self.is_incognito:
+            session = self.profile_manager.load_session_tabs(self.profile_id)
+            tabs = session.get("tabs", [])
+            active_idx = session.get("active_index", 0)
+            if tabs:
+                for url in tabs:
+                    self.add_new_tab(url)
+                if 0 <= active_idx < self.tab_bar.count():
+                    self.setCurrentIndex(active_idx)
+                return
+
+        self.add_new_tab(fallback_url)
 
     def init_web_profile(self):
         """Configure WebEngine profile with Brave Shield settings and anti-popup injection."""
@@ -125,6 +161,13 @@ class YourBrowserWindow(QMainWindow):
             self.profile = QWebEngineProfile(self)
             self.profile.setHttpCacheType(QWebEngineProfile.HttpCacheType.MemoryHttpCache)
             self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.NoPersistentCookies)
+        elif self.profile_id:
+            storage_name = f"yourbrowser_profile_{self.profile_id}"
+            self.profile = QWebEngineProfile(storage_name, self)
+            storage_path = os.path.join(self.profile_manager.get_profile_dir(self.profile_id), "web_engine")
+            os.makedirs(storage_path, exist_ok=True)
+            self.profile.setPersistentStoragePath(storage_path)
+            self.profile.setPersistentCookiesPolicy(QWebEngineProfile.PersistentCookiesPolicy.AllowPersistentCookies)
         else:
             self.profile = QWebEngineProfile.defaultProfile()
 
@@ -286,12 +329,36 @@ class YourBrowserWindow(QMainWindow):
         self.shield_btn.clicked.connect(self.show_shields_popup)
         nav_layout.addWidget(self.shield_btn)
 
-        # Cyber Tab Lock Button
+        # Profiles Dashboard Button (replaces Lock Tab on toolbar)
+        self.dashboard_btn = QPushButton(" Dashboard", nav_toolbar)
+        self.dashboard_btn.setObjectName("dashboard_btn")
+        self.dashboard_btn.setIcon(create_svg_icon("dashboard", "#94A3B8", 16))
+        self.dashboard_btn.setIconSize(QSize(16, 16))
+        self.dashboard_btn.setToolTip("Back to Profiles Dashboard")
+        self.dashboard_btn.setStyleSheet("""
+            QPushButton#dashboard_btn {
+                background-color: #161A24;
+                color: #CBD5E1;
+                border: 1px solid #283042;
+                border-radius: 6px;
+                padding: 5px 10px;
+                font-weight: 600;
+            }
+            QPushButton#dashboard_btn:hover {
+                background-color: #FF5500;
+                color: #FFFFFF;
+                border-color: #FF5500;
+            }
+        """)
+        self.dashboard_btn.clicked.connect(self.go_to_dashboard)
+        nav_layout.addWidget(self.dashboard_btn)
+
+        # Tab Lock Button (hidden from toolbar, functionality preserved via context menu)
         self.lock_btn = QPushButton("🔒 Lock Tab", nav_toolbar)
         self.lock_btn.setObjectName("lock_btn")
         self.lock_btn.setToolTip("Protect this tab with password or PIN")
         self.lock_btn.clicked.connect(self.on_lock_current_tab)
-        nav_layout.addWidget(self.lock_btn)
+        self.lock_btn.hide()
 
         # 3-Dots Main Menu Button (⋮)
         self.menu_btn = QPushButton(nav_toolbar)
@@ -946,3 +1013,35 @@ class YourBrowserWindow(QMainWindow):
         for i in reversed(range(total)):
             if i != keep_index:
                 self.close_tab(i)
+
+    def save_current_session(self):
+        """Save open tab URLs to profile data for session persistence."""
+        if not self.profile_id or self.is_incognito:
+            return
+        urls = []
+        for i in range(self.stacked_widget.count()):
+            container = self.stacked_widget.widget(i)
+            if container and getattr(container, "web_view", None):
+                qurl = container.web_view.url()
+                url_str = qurl.toString() if not qurl.isEmpty() else getattr(container, "requested_url", "")
+                if url_str and not url_str.startswith("about:") and not url_str.startswith("data:"):
+                    urls.append(url_str)
+        active_idx = self.tab_bar.currentIndex()
+        self.profile_manager.save_session_tabs(self.profile_id, urls, active_idx)
+
+    def go_to_dashboard(self):
+        """Save session tabs and return to the Profile Dashboard."""
+        self.save_current_session()
+        if self.dashboard_window:
+            self.dashboard_window.return_to_dashboard()
+        else:
+            from src.ui.dashboard_window import DashboardWindow
+            self.dashboard_window = DashboardWindow(profile_manager=self.profile_manager)
+            self.dashboard_window.show()
+        self.close()
+
+    def closeEvent(self, event):
+        """Ensure session tabs are saved before window is closed."""
+        self.save_current_session()
+        super().closeEvent(event)
+
