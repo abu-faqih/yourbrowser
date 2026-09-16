@@ -10,3 +10,6 @@
 *.apk
 *.aab
 *.zip
+__pycache__/
+*.pyc
+.browser_data/

@@ -261,5 +261,158 @@ QMenu::separator {
 QMenu::icon {
     padding-left: 6px;
 }
+
+/* ========================================================== */
+/* Bookmarks Bar                                              */
+/* ========================================================== */
+#bookmarks_bar {
+    background-color: #121620;
+    border-bottom: 1px solid #1C2333;
+    min-height: 30px;
+    max-height: 32px;
+    padding: 2px 10px;
+}
+
+QPushButton.bookmark-bar-item {
+    background-color: transparent;
+    color: #94A3B8;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+    text-align: left;
+}
+
+QPushButton.bookmark-bar-item:hover {
+    background-color: #1E2535;
+    color: #F8FAFC;
+    border: 1px solid #2B354C;
+}
+
+/* ========================================================== */
+/* Find In Page Floating Bar                                  */
+/* ========================================================== */
+#find_bar {
+    background-color: #161A24;
+    border: 1px solid #293448;
+    border-radius: 10px;
+    padding: 4px 8px;
+}
+
+#find_input {
+    background-color: #0E121A;
+    border: 1px solid #2B3347;
+    border-radius: 6px;
+    color: #F8FAFC;
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 180px;
+}
+
+#find_input:focus {
+    border: 1px solid #38BDF8;
+}
+
+#find_match_lbl {
+    color: #94A3B8;
+    font-size: 12px;
+    padding: 0 4px;
+}
+
+/* ========================================================== */
+/* Zoom Indicator Badge in Omnibox                            */
+/* ========================================================== */
+QLabel#zoom_badge {
+    background-color: #1E2535;
+    color: #38BDF8;
+    border: 1px solid #2B354C;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ========================================================== */
+/* Modern Dark Dialogs                                        */
+/* ========================================================== */
+QDialog {
+    background-color: #0F131C;
+    color: #F8FAFC;
+}
+
+QListWidget {
+    background-color: #121620;
+    border: 1px solid #212838;
+    border-radius: 8px;
+    color: #E2E8F0;
+    padding: 4px;
+}
+
+QListWidget::item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 2px;
+}
+
+QListWidget::item:selected {
+    background-color: #242D3E;
+    color: #38BDF8;
+}
+
+QListWidget::item:hover:!selected {
+    background-color: #171D2B;
+}
+
+QLineEdit.dialog-search {
+    background-color: #141924;
+    border: 1px solid #263044;
+    border-radius: 8px;
+    color: #F8FAFC;
+    padding: 7px 12px;
+    font-size: 13px;
+}
+
+QLineEdit.dialog-search:focus {
+    border: 1px solid #FF5500;
+}
+
+QPushButton.dialog-btn-primary {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF5500, stop:1 #FF2A54);
+    color: #FFFFFF;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 16px;
+    border: none;
+}
+
+QPushButton.dialog-btn-primary:hover {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF6A1F, stop:1 #FF4267);
+}
+
+QPushButton.dialog-btn-secondary {
+    background-color: #1E2535;
+    color: #CBD5E1;
+    border: 1px solid #2B354C;
+    border-radius: 8px;
+    padding: 8px 16px;
+}
+
+QPushButton.dialog-btn-secondary:hover {
+    background-color: #262F44;
+    color: #FFFFFF;
+}
+
+QPushButton.dialog-btn-danger {
+    background-color: #7F1D1D;
+    color: #FECACA;
+    border: 1px solid #DC2626;
+    border-radius: 8px;
+    padding: 8px 16px;
+}
+
+QPushButton.dialog-btn-danger:hover {
+    background-color: #991B1B;
+}
 """
+
 
