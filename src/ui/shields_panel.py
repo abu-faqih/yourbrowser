@@ -1,5 +1,5 @@
 """
-YourBrowser UI - Brave Shields Interactive Panel
+YourBrowser UI - Ultra-Modern Brave Shields Dropdown Panel
 """
 
 from PyQt6.QtWidgets import (
@@ -7,9 +7,10 @@ from PyQt6.QtWidgets import (
     QFrame, QWidget
 )
 from PyQt6.QtCore import Qt
+from src.resources.icons import create_svg_icon
 
 class ShieldsPopup(QDialog):
-    """Interactive Brave Shields dropdown modal."""
+    """Modern Brave-style Shields popover with real-time telemetry card."""
     
     def __init__(self, interceptor, current_url="", parent=None):
         super().__init__(parent)
@@ -24,116 +25,157 @@ class ShieldsPopup(QDialog):
             QDialog {
                 background-color: transparent;
             }
-            #container {
-                background-color: #1E222D;
-                border: 1px solid #3B4254;
-                border-radius: 12px;
-                padding: 16px;
+            #card {
+                background-color: #161B26;
+                border: 1px solid #2C3549;
+                border-radius: 16px;
+                padding: 18px;
             }
-            QLabel.title {
-                font-size: 16px;
-                font-weight: bold;
+            QLabel.brand-title {
+                font-size: 15px;
+                font-weight: 700;
                 color: #FFFFFF;
             }
-            QLabel.counter {
-                font-size: 32px;
-                font-weight: 800;
-                color: #FF5500;
-            }
-            QLabel.subtitle {
+            QLabel.domain-text {
                 font-size: 12px;
                 color: #94A3B8;
             }
-            QPushButton.toggle-btn {
-                background-color: #FF5500;
+            QPushButton.toggle-btn-on {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF5500, stop:1 #FF2A54);
                 color: #FFFFFF;
-                font-weight: bold;
-                padding: 8px 16px;
-                border-radius: 8px;
+                font-weight: 700;
+                font-size: 11px;
+                padding: 6px 14px;
+                border-radius: 12px;
                 border: none;
             }
-            QPushButton.toggle-btn.off {
-                background-color: #475569;
+            QPushButton.toggle-btn-off {
+                background-color: #334155;
                 color: #CBD5E1;
+                font-weight: 700;
+                font-size: 11px;
+                padding: 6px 14px;
+                border-radius: 12px;
+                border: none;
             }
-            QFrame.divider {
-                background-color: #2D3344;
-                max-height: 1px;
+            #metric_box {
+                background-color: #0E121A;
+                border: 1px solid #232B3B;
+                border-radius: 12px;
+                padding: 16px;
                 margin: 10px 0;
             }
-            QLabel.badge {
-                background-color: #2D3344;
-                color: #38BDF8;
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 11px;
-                font-weight: bold;
+            QLabel.counter-number {
+                font-size: 34px;
+                font-weight: 800;
+                color: #FF5500;
+            }
+            QLabel.counter-label {
+                font-size: 12px;
+                font-weight: 500;
+                color: #94A3B8;
+            }
+            QLabel.feature-item {
+                font-size: 12px;
+                color: #E2E8F0;
+                padding: 3px 0;
+            }
+            QLabel.badge-green {
+                color: #10B981;
+                font-weight: 700;
             }
         """)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        container = QFrame(self)
-        container.setObjectName("container")
-        c_layout = QVBoxLayout(container)
+        card = QFrame(self)
+        card.setObjectName("card")
+        c_layout = QVBoxLayout(card)
+        c_layout.setSpacing(10)
 
-        # Header with Lion branding
+        # Header Row
         h_layout = QHBoxLayout()
-        title_lbl = QLabel("🛡️ Brave Shields", container)
-        title_lbl.setProperty("class", "title")
-        h_layout.addWidget(title_lbl)
+        header_text_box = QVBoxLayout()
+        header_text_box.setSpacing(2)
+
+        brand_title = QLabel("🛡️ Brave Shields Pro", card)
+        brand_title.setProperty("class", "brand-title")
+        header_text_box.addWidget(brand_title)
+
+        domain = "This Site"
+        if self.current_url:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(self.current_url)
+                domain = parsed.hostname or "Current Page"
+            except Exception:
+                pass
+
+        domain_lbl = QLabel(domain, card)
+        domain_lbl.setProperty("class", "domain-text")
+        header_text_box.addWidget(domain_lbl)
+        h_layout.addLayout(header_text_box)
         h_layout.addStretch()
 
-        self.toggle_btn = QPushButton("SHIELDS UP", container)
-        self.toggle_btn.setProperty("class", "toggle-btn")
+        self.toggle_btn = QPushButton("SHIELDS UP", card)
+        self.toggle_btn.setProperty("class", "toggle-btn-on")
         self.toggle_btn.clicked.connect(self.on_toggle_shields)
         h_layout.addWidget(self.toggle_btn)
         c_layout.addLayout(h_layout)
 
-        # Divider
-        div = QFrame(container)
-        div.setProperty("class", "divider")
-        c_layout.addWidget(div)
+        # Main Metric Box
+        metric_box = QFrame(card)
+        metric_box.setObjectName("metric_box")
+        m_layout = QVBoxLayout(metric_box)
+        m_layout.setSpacing(2)
+        m_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Counter Section
-        count_layout = QVBoxLayout()
-        self.count_lbl = QLabel(str(self.interceptor.blocked_count), container)
-        self.count_lbl.setProperty("class", "counter")
-        self.count_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        count_layout.addWidget(self.count_lbl)
+        self.counter_lbl = QLabel(str(self.interceptor.blocked_count), metric_box)
+        self.counter_lbl.setProperty("class", "counter-number")
+        self.counter_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        m_layout.addWidget(self.counter_lbl)
 
-        sub_lbl = QLabel("Trackers & Ads Blocked", container)
-        sub_lbl.setProperty("class", "subtitle")
-        sub_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        count_layout.addWidget(sub_lbl)
-        c_layout.addLayout(count_layout)
+        lbl_desc = QLabel("Trackers & Ads Blocked", metric_box)
+        lbl_desc.setProperty("class", "counter-label")
+        lbl_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        m_layout.addWidget(lbl_desc)
 
-        # Features List
-        div2 = QFrame(container)
-        div2.setProperty("class", "divider")
-        c_layout.addWidget(div2)
+        c_layout.addWidget(metric_box)
 
-        feat1 = QLabel("✓ Aggressive Ad & Tracker Blocking", container)
-        feat1.setStyleSheet("color: #10B981; font-weight: 500;")
-        c_layout.addWidget(feat1)
+        # Active Protections Checklist
+        list_box = QVBoxLayout()
+        list_box.setSpacing(6)
 
-        feat2 = QLabel("✓ Strict Fingerprinting Protection", container)
-        feat2.setStyleSheet("color: #10B981; font-weight: 500;")
-        c_layout.addWidget(feat2)
+        def add_feature(text):
+            row = QHBoxLayout()
+            check = QLabel("✓", card)
+            check.setProperty("class", "badge-green")
+            row.addWidget(check)
+            txt = QLabel(text, card)
+            txt.setProperty("class", "feature-item")
+            row.addWidget(txt)
+            row.addStretch()
+            list_box.addLayout(row)
 
-        feat3 = QLabel("✓ Popunder & Redirect Neutralizer", container)
-        feat3.setStyleSheet("color: #10B981; font-weight: 500;")
-        c_layout.addWidget(feat3)
+        add_feature("Cross-site trackers & telemetry blocked")
+        add_feature("Aggressive cosmetic & banner filtering")
+        add_feature("Strict browser fingerprinting defense")
+        add_feature("Anti-clickjacking & popunder suppressor")
 
-        layout.addWidget(container)
-        self.resize(300, 240)
+        c_layout.addLayout(list_box)
+        layout.addWidget(card)
+        self.resize(320, 270)
 
     def on_toggle_shields(self):
         self.interceptor.shields_enabled = not self.interceptor.shields_enabled
         if self.interceptor.shields_enabled:
             self.toggle_btn.setText("SHIELDS UP")
-            self.toggle_btn.setStyleSheet("background-color: #FF5500;")
+            self.toggle_btn.setProperty("class", "toggle-btn-on")
+            self.toggle_btn.setStyleSheet("")
         else:
             self.toggle_btn.setText("SHIELDS DOWN")
-            self.toggle_btn.setStyleSheet("background-color: #475569;")
+            self.toggle_btn.setProperty("class", "toggle-btn-off")
+            self.toggle_btn.setStyleSheet("")
+        self.toggle_btn.style().unpolish(self.toggle_btn)
+        self.toggle_btn.style().polish(self.toggle_btn)

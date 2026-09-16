@@ -27,7 +27,8 @@ yourbrowser/
 │   │   ├── shields_panel.py            # Dropdown popup panel interaktif Brave Shields
 │   │   └── lock_modal.py               # Dialog set password & overlay pengunci tab
 │   └── resources/
-│       └── style.py                    # Tema Brave Obsidian Dark (QSS / CSS)
+│       ├── style.py                    # Tema Brave Obsidian Pro (QSS / CSS)
+│       └── icons.py                    # Modul ikon vektor SVG resolusi tinggi
 ├── tests/
 │   ├── test_security.py                # Unit test verifikasi enkripsi password tab & profil
 │   ├── test_browser_integration.py     # Integration test UI, tabs, dan lock/unlock lifecycle
