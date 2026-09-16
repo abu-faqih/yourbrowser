@@ -9,10 +9,15 @@ QMainWindow {
     color: #F8FAFC;
 }
 
-QWidget {
+/* Specific UI components styling - Do NOT use generic QWidget to prevent leaking into QWebEngineView DOM */
+QMainWindow, QDialog, QMenu, QTabBar, QLabel, QLineEdit, QPushButton, QListWidget, QGroupBox, QComboBox, QProgressBar {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Ubuntu", sans-serif;
     font-size: 13px;
     color: #E2E8F0;
+}
+
+QWebEngineView {
+    background-color: #FFFFFF;
 }
 
 /* ========================================================== */

@@ -11,7 +11,8 @@ import uuid
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabBar, QLineEdit, QPushButton, QStackedWidget,
-    QMessageBox, QProgressBar, QLabel, QFrame, QMenu
+    QMessageBox, QProgressBar, QLabel, QFrame, QMenu,
+    QSizePolicy
 )
 from PyQt6.QtCore import QUrl, Qt, QTimer, QSize
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
@@ -63,15 +64,19 @@ class TabContainer(QWidget):
         self.security_manager = security_manager
         self.is_locked = False
 
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.web_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
-        self.layout.addWidget(self.web_view)
+        self.layout.addWidget(self.web_view, stretch=1)
 
         self.overlay = LockedTabOverlay(self.tab_id, self.security_manager, self)
+        self.overlay.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.overlay.unlocked.connect(self.on_unlocked)
         self.overlay.hide()
-        self.layout.addWidget(self.overlay)
+        self.layout.addWidget(self.overlay, stretch=1)
 
     def lock_tab(self):
         self.is_locked = True
@@ -307,7 +312,7 @@ class YourBrowserWindow(QMainWindow):
         self.bookmarks_bar.open_new_tab_requested.connect(lambda u: self.add_new_tab(u))
         main_layout.addWidget(self.bookmarks_bar)
 
-        show_bm_bar = self.settings_manager.get("show_bookmarks_bar", True)
+        show_bm_bar = self.settings_manager.get("show_bookmarks_bar", False)
         self.bookmarks_bar.setVisible(show_bm_bar)
 
         # Ultra-Thin Neon Loading Progress Bar
@@ -336,7 +341,8 @@ class YourBrowserWindow(QMainWindow):
         # 5. WEB CONTENT AREA
         # ==========================================================
         self.stacked_widget = QStackedWidget(self)
-        main_layout.addWidget(self.stacked_widget)
+        self.stacked_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        main_layout.addWidget(self.stacked_widget, stretch=1)
 
         # Compatibility alias for unit tests
         self.tabs = self
@@ -428,6 +434,7 @@ class YourBrowserWindow(QMainWindow):
         settings.setAttribute(QWebEngineSettings.WebAttribute.AllowRunningInsecureContent, False)
 
         page = CustomWebEnginePage(self.profile, self, view)
+        page.setBackgroundColor(Qt.GlobalColor.white)
         view.setPage(page)
 
         container = TabContainer(tab_id, view, self.security_manager, self.stacked_widget)

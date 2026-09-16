@@ -46,7 +46,7 @@ DEFAULT_SETTINGS = {
         "bing": "https://www.bing.com/search?q={query}"
     },
     "homepage": "https://search.brave.com",
-    "show_bookmarks_bar": True,
+    "show_bookmarks_bar": False,
     "shields_enabled_by_default": True
 }
 

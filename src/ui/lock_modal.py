@@ -34,7 +34,6 @@ class SetPasswordDialog(QDialog):
             QLabel.desc-text {
                 font-size: 13px;
                 color: #94A3B8;
-                line-height: 1.4;
             }
             QLineEdit {
                 background-color: #0A0D14;
@@ -76,19 +75,24 @@ class SetPasswordDialog(QDialog):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
+        layout.setSpacing(14)
 
         title = QLabel(f"🔒 Lock Tab Protection", self)
         title.setProperty("class", "header-title")
         layout.addWidget(title)
 
-        desc = QLabel(
-            f"Set a password or PIN for tab:\n<b>\"{self.tab_title[:35]}...\"</b>\n"
-            "Contents will be completely hidden behind an encrypted lock screen until unlocked.",
-            self
-        )
+        import html
+        safe_title = html.escape(self.tab_title[:30] + ("..." if len(self.tab_title) > 30 else ""))
+        desc = QLabel(self)
         desc.setProperty("class", "desc-text")
         desc.setWordWrap(True)
+        desc.setTextFormat(Qt.TextFormat.RichText)
+        desc.setText(
+            f"<div style='color:#94A3B8; font-size:13px; margin-bottom: 6px;'>"
+            f"Set a password or PIN for tab: <b>\"{safe_title}\"</b><br><br>"
+            f"Contents will be completely hidden behind an encrypted lock screen until unlocked."
+            f"</div>"
+        )
         layout.addWidget(desc)
 
         self.input_pwd = QLineEdit(self)
@@ -109,13 +113,13 @@ class SetPasswordDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         btn_box.addWidget(cancel_btn)
 
-        save_btn = QPushButton("Protect & Lock", self)
+        save_btn = QPushButton("Protect && Lock", self)
         save_btn.setProperty("class", "primary-btn")
         save_btn.clicked.connect(self.on_save)
         btn_box.addWidget(save_btn)
 
         layout.addLayout(btn_box)
-        self.resize(380, 260)
+        self.resize(460, 340)
 
     def on_save(self):
         pwd = self.input_pwd.text().strip()
