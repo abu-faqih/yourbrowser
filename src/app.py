@@ -19,6 +19,11 @@ if PROJECT_ROOT not in sys.path:
 if "QTWEBENGINE_CHROMIUM_FLAGS" not in os.environ:
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
 
+from PyQt6.QtCore import Qt, QCoreApplication
+# Must be set before QApplication is instantiated for QtWebEngine
+QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
+
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 from src.ui.dashboard_window import DashboardWindow
 from src.ui.browser_window import YourBrowserWindow
 
