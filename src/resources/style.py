@@ -118,45 +118,55 @@ QPushButton.nav-btn:pressed {
 }
 
 /* ========================================================== */
-/* Capsule Omnibox Frame                                      */
+/* True Pill Omnibox Frame (Fully Rounded Ends)              */
 /* ========================================================== */
 #omnibox_capsule {
     background-color: #0E121A;
-    border: 1px solid #2A3245;
-    border-radius: 18px;
-    padding: 1px 12px;
+    border: 1px solid #2B3347;
+    border-radius: 19px;
+    min-height: 36px;
+    max-height: 38px;
+    padding-left: 14px;
+    padding-right: 12px;
 }
 
 #omnibox_capsule:hover {
-    border: 1px solid #3A455E;
-    background-color: #101520;
+    border: 1px solid #3F4B66;
+    background-color: #111522;
 }
 
 QLineEdit#omnibox_input {
     background-color: transparent;
     border: none;
-    padding: 6px 6px;
+    padding: 2px 8px;
     color: #F8FAFC;
-    font-size: 13px;
+    font-size: 13.5px;
     selection-background-color: #FF5500;
+}
+
+QLineEdit#omnibox_input:focus {
+    outline: none;
 }
 
 QLabel#ssl_icon_lbl {
     color: #10B981;
-    font-size: 12px;
-    padding-right: 4px;
+    font-size: 13px;
+    margin-right: 2px;
 }
 
 QPushButton#bookmark_btn {
     background-color: transparent;
     border: none;
-    padding: 4px;
+    border-radius: 12px;
+    padding: 5px;
     color: #64748B;
 }
 
 QPushButton#bookmark_btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
     color: #FBBF24;
 }
+
 
 /* ========================================================== */
 /* Brave Shields Pill Badge                                   */

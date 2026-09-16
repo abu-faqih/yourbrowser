@@ -181,31 +181,33 @@ class YourBrowserWindow(QMainWindow):
         self.home_btn.clicked.connect(lambda: self.navigate_url("https://search.brave.com"))
         nav_layout.addWidget(self.home_btn)
 
-        # Integrated Capsule Omnibox Frame
-        omnibox_capsule = QFrame(nav_toolbar)
-        omnibox_capsule.setObjectName("omnibox_capsule")
-        capsule_layout = QHBoxLayout(omnibox_capsule)
-        capsule_layout.setContentsMargins(6, 0, 8, 0)
+        # Integrated True Pill Omnibox Frame
+        self.omnibox_capsule = QFrame(nav_toolbar)
+        self.omnibox_capsule.setObjectName("omnibox_capsule")
+        self.omnibox_capsule.setFixedHeight(38)
+        capsule_layout = QHBoxLayout(self.omnibox_capsule)
+        capsule_layout.setContentsMargins(10, 0, 10, 0)
         capsule_layout.setSpacing(6)
 
-        self.ssl_icon_lbl = QLabel("🔒", omnibox_capsule)
+        self.ssl_icon_lbl = QLabel("🔒", self.omnibox_capsule)
         self.ssl_icon_lbl.setObjectName("ssl_icon_lbl")
         capsule_layout.addWidget(self.ssl_icon_lbl)
 
-        self.omnibox = QLineEdit(omnibox_capsule)
+        self.omnibox = QLineEdit(self.omnibox_capsule)
         self.omnibox.setObjectName("omnibox_input")
         self.omnibox.setPlaceholderText("Search with Brave or enter web address...")
         self.omnibox.returnPressed.connect(self.on_omnibox_return)
         capsule_layout.addWidget(self.omnibox, stretch=1)
 
-        self.bookmark_btn = QPushButton(omnibox_capsule)
+        self.bookmark_btn = QPushButton(self.omnibox_capsule)
         self.bookmark_btn.setObjectName("bookmark_btn")
         self.bookmark_btn.setIcon(create_svg_icon("star", "#64748B", 16))
         self.bookmark_btn.setIconSize(QSize(16, 16))
         self.bookmark_btn.setToolTip("Bookmark this tab")
         capsule_layout.addWidget(self.bookmark_btn)
 
-        nav_layout.addWidget(omnibox_capsule, stretch=1)
+        nav_layout.addWidget(self.omnibox_capsule, stretch=1)
+
 
         # Brave Shields Lion Button
         self.shield_btn = QPushButton("🛡️ 0 Blocked", nav_toolbar)
