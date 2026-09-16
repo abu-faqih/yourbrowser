@@ -1,0 +1,12 @@
+{
+  "DefaultPopupsSetting": 2,
+  "PopupsBlockedForUrls": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "AutoplayAllowed": true,
+  "PasswordManagerEnabled": true,
+  "SpellcheckEnabled": true,
+  "MetricsReportingEnabled": false,
+  "BraveRewardsDisabled": true
+}

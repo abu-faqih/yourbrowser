@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# YourBrowser - High Performance Ad-Free Privacy Browser
+# Fork distribution based on Brave Engine with aggressive Shields & Shield Booster
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Find Brave engine wrapper
+BRAVE_BIN=""
+if which brave-browser >/dev/null 2>&1; then
+    BRAVE_BIN="$(which brave-browser)"
+elif which brave-browser-stable >/dev/null 2>&1; then
+    BRAVE_BIN="$(which brave-browser-stable)"
+elif [ -x "/usr/bin/brave-browser" ]; then
+    BRAVE_BIN="/usr/bin/brave-browser"
+elif which brave >/dev/null 2>&1; then
+    BRAVE_BIN="$(which brave)"
+else
+    echo "[YourBrowser] ERROR: Brave engine binary not found on this system." >&2
+    exit 1
+fi
+
+# Detect if --user-data-dir was supplied in arguments
+CUSTOM_DATA_DIR=""
+for arg in "$@"; do
+    if [[ "$arg" == --user-data-dir=* ]]; then
+        CUSTOM_DATA_DIR="${arg#*=}"
+    fi
+done
+
+USER_DATA_DIR="${CUSTOM_DATA_DIR:-${YOURBROWSER_DATA_DIR:-$HOME/.config/yourbrowser}}"
+mkdir -p "$USER_DATA_DIR"
+
+# Initialize default preferences if new profile
+PREFS_FILE="$USER_DATA_DIR/Default/Preferences"
+if [ ! -f "$PREFS_FILE" ]; then
+    mkdir -p "$USER_DATA_DIR/Default"
+    cat << 'PREF_EOF' > "$PREFS_FILE"
+{
+  "brave": {
+    "shields": {
+      "ad_block_mode": "aggressive",
+      "advanced_view_enabled": true,
+      "fingerprinting_v2_mode": "strict"
+    }
+  },
+  "profile": {
+    "default_content_setting_values": {
+      "popups": 2,
+      "notifications": 2
+    }
+  }
+}
+PREF_EOF
+fi
+
+EXTENSION_PATH="$PROJECT_ROOT/extensions/shield-booster"
+
+FLAGS=(
+    "--class=YourBrowser"
+    "--no-default-browser-check"
+    "--no-first-run"
+    "--autoplay-policy=no-user-gesture-required"
+    "--enable-features=BraveShields,BraveAdblockCosmeticFiltering,BraveAdblockCspRules"
+)
+
+if [ -z "$CUSTOM_DATA_DIR" ]; then
+    FLAGS+=("--user-data-dir=$USER_DATA_DIR")
+fi
+
+if [ -d "$EXTENSION_PATH" ]; then
+    FLAGS+=("--load-extension=$EXTENSION_PATH")
+fi
+
+exec "$BRAVE_BIN" "${FLAGS[@]}" "$@"

@@ -18,10 +18,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "YourBrowser"
 
-include(":core:common")
-include(":core:crypto")
-include(":core:network")
-include(":core:browser")
-include(":feature:vault")
-include(":feature:downloader")
-include(":app")
+
+// Modul akan diinisialisasi kembali saat implementasi ulang dimulai
+// include(":app")
+

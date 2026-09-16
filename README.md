@@ -1,46 +1,31 @@
-# YourBrowser: Advanced Media Sniffer & Multi-Vault Incognito Android Browser
+# YourBrowser: Next-Gen Privacy Browser (Brave Engine Distribution)
 
 ## Ringkasan Proyek
-**YourBrowser** adalah peramban web (*web browser*) Android tingkat lanjut yang dirancang khusus untuk kebutuhan kontrol penuh pengguna tanpa batasan kebijakan pihak ketiga. Dua pilar utama dari peramban ini adalah:
-1. **Universal Video Sniffer & Downloader**: Kemampuan mendeteksi, menangkap (*sniffing*), dan mengunduh berbagai format media video yang diputar (Direct MP4, HLS `.m3u8`, MPEG-DASH `.mpd`, dan Blob/MSE stream), dilengkapi engine *parallel chunk downloader* dan *local muxing*.
-2. **Multi-Vault Incognito (Zero-Knowledge Multi-Sesi)**: Sistem penjelajahan privat multi-identitas di mana setiap kata sandi (*password*) yang berbeda membuka partisi sesi (*vault*) yang sepenuhnya terisolasi dan terenkripsi. Tidak ada *master key* global; setiap sesi memiliki basis data, cookie, cache, dan penyimpanan lokal yang terpisah secara kriptografis.
+**YourBrowser** adalah peramban web (*web browser*) multi-platform generasi baru berbasis arsitektur **Brave Browser (Chromium Core)**. Browser ini dirancang dengan fokus privasi tingkat tinggi, proteksi pelacak agresif (*Brave Shields*), serta netralisasi total terhadap popup, popunder, dan penipuan klik (*click-hijacking*) pada situs-situs streaming modern.
 
----
-
-## Arsitektur & Teknologi
-
-* **Platform & Bahasa**: Android Native, Kotlin
-* **Min SDK**: 26 (Android 8.0 Oreo) | **Target SDK**: 34/35 (Android 14/15)
-* **Browser Engine**:
-  * Opsi Rekomendasi: **Mozilla GeckoView** (Menyediakan isolasi partisi browser context/container murni dan hooks jaringan menyeluruh).
-  * Opsi Alternatif: **Android System WebView** dengan isolasi arsitektur multi-proses (`setDataDirectorySuffix`).
-* **Security & Kriptografi**:
-  * **Argon2id** untuk Key Derivation Function (KDF) dari input kata sandi pengguna.
-  * **AES-256-GCM** untuk enkripsi file dan state vault.
-  * **SQLCipher** untuk enkripsi database lokal (riwayat, bookmark, download queue).
-  * `FLAG_SECURE` dan *in-memory zeroization* (`ByteArray.fill(0)`) untuk mencegah *memory inspection* dan *leakage*.
-* **Media & Networking Engine**:
-  * **OkHttp** untuk network request inspection dan multi-threaded segmented downloading.
-  * **FFmpeg-Kit** / **Android MediaMuxer** untuk muxing segmen video HLS/DASH ke container tunggal `.mp4`.
-  * **ExoPlayer / Media3** untuk parser manifest (HLS/DASH).
+Proyek ini dirancang untuk multi-platform (**Linux**, **Windows**, dan **Android**), dengan fokus implementasi tahap pertama pada lingkungan **Linux**.
 
 ---
 
 ## Fitur Utama
 
-### 1. Universal Video Sniffer & Downloader
-* **Network & DOM Interception**: Mendeteksi URL video secara real-time dari header respons HTTP/HTTPS maupun inspeksi tag `<video>` via JavaScript injection bridge.
-* **Support Adaptive Streaming**:
-  * Direct file: `.mp4`, `.webm`, `.mkv`.
-  * Adaptive bitrate streaming: HLS (`.m3u8` manifest parsing, TS / fMP4 segment downloading) & MPEG-DASH (`.mpd`).
-* **Resumable & Parallel Downloader**: Pengunduhan segmen paralel dengan mekanisme *chunk retry* dan *resumable session*.
-* **Local Muxing Engine**: Penggabungan audio dan video stream menjadi file `.mp4` standar yang siap diputar di galeri atau pemutar media eksternal.
+1. **Brave Shields Native Integration**:
+   - Pemblokiran iklan agresif (*aggressive adblocking*) dan pemfilteran kosmetik elemen manipulatif.
+   - Proteksi sidik jari peramban (*strict fingerprinting protection*).
+   - Pemblokiran pelacak lintas-situs (*cross-site tracker blocking*).
 
-### 2. Multi-Vault Incognito Mode
-* **Multi-Password Partitioning**: Pengguna dapat mendefinisikan N password berbeda. Setiap password menghasilkan derivasi kunci unik yang membuka sesi (*vault*) spesifik.
-* **Plausible Deniability**: Tidak ada daftar akun/vault yang terekspos. Jika pengguna dipaksa membuka browser, mereka cukup memasukkan password "vault dummy/decoy".
-* **Total Storage Isolation**: Cookie, cache, IndexedDB, LocalStorage, dan riwayat download disimpan di partisi terpisah per vault.
-* **Ephemeral Mode**: Mode pembersihan total saat sesi ditutup (*secure wiping* memory dan temporary cache).
+2. **YourBrowser Shield Booster (Anti-Popunder & Anti-Clickjacking)**:
+   - Injeksi otomatis di tingkat kernel peramban (*Manifest V3 Content Script & Service Worker*).
+   - Menetralkan jebakan `window.open`, *invisible banner overlays*, dan manipulasi event `click`/`mousedown` pada situs streaming.
+   - Pembersihan otomatis (*auto-purge*) terhadap iframe jaringan iklan liar.
+   - Deteksi dan penutupan instan tab popunder liar dari situs streaming.
+
+3. **Seamless Media Streaming**:
+   - Menjamin video streaming (HLS, DASH, Direct MP4 via Cloud Storage) dapat langsung diputar dengan suara (*unmuted* & audio jernih) tanpa tertahan oleh dialog atau popunder iklan.
+   - Teruji dan terverifikasi secara sempurna pada situs streaming agresif: `https://mamamas.xyz/this-party-dead-2026`.
+
+4. **Isolasi Data Profil Pengguna**:
+   - Menyimpan seluruh cache, riwayat, cookie, dan preferensi terpisah pada folder terdedikasi `~/.config/yourbrowser`.
 
 ---
 
@@ -48,36 +33,66 @@
 
 ```text
 yourbrowser/
-├── README.md               # Dokumentasi utama proyek
-├── PRD.md                  # Product Requirements Document
-├── app/                    # Entry point aplikasi & UI (Jetpack Compose / Material3)
-├── core/
-│   ├── browser/            # Abstraksi Browser Engine (GeckoView / WebView)
-│   ├── crypto/             # Argon2id KDF, AES-256-GCM, SQLCipher helper
-│   ├── network/            # OkHttp client, request sniffer, proxy config
-│   └── common/             # Utilities, extensions, dispatchers
-├── feature/
-│   ├── downloader/         # Video sniffer, manifest parser, chunk downloader, FFmpeg muxer
-│   ├── vault/              # Session switcher, vault isolation, password auth
-│   └── tab-management/     # Tab manager, history, bookmark
-└── gradle/                 # Build scripts & version catalog
+├── README.md                           # Dokumentasi peramban & panduan
+├── PRD.md                              # Product Requirements Document
+├── DESIGN_SYSTEM.md                    # Panduan visual dan design tokens
+├── bin/
+│   └── yourbrowser                     # Executable launcher utama YourBrowser
+├── config/
+│   └── policies.json                   # Kebijakan peramban terkelola (Anti-Popup, Anti-Metrics)
+├── extensions/
+│   └── shield-booster/                 # Ekstensi internal Shield Booster (Anti-popunder & clickjacking)
+│       ├── manifest.json
+│       ├── content.js                  # Main world interception
+│       ├── isolated_content.js         # Isolated world DOM cleaner
+│       └── background.js               # Service worker tab governor
+├── desktop/
+│   └── yourbrowser.desktop             # Integrasi desktop Linux (FreeDesktop standard)
+├── assets/
+│   └── icons/                          # Aset visual & logo vektor YourBrowser
+│       └── yourbrowser.svg
+└── scripts/
+    ├── install_desktop.sh              # Skrip instalasi shortcut desktop ke sistem
+    └── verify_stream.py                # Otomasi pengujian streaming & audit anti-popup
 ```
 
 ---
 
-## Panduan Build & Setup
+## Panduan Menjalankan (Linux)
 
-### Prasyarat
-* Android Studio Iguana / Ladybug atau versi yang lebih baru
-* JDK 17
-* Android SDK (API Level 34/35)
-* NDK (jika mengompilasi custom C/C++ muxer)
-
-### Langkah Kompilasi
+### 1. Menjalankan Langsung via Terminal
 ```bash
-# Build debug APK
-./gradlew assembleDebug
+# Meluncurkan browser dengan profil default YourBrowser
+./bin/yourbrowser
 
-# Jalankan Unit Tests
-./gradlew testDebugUnitTest
+# Membuka langsung URL spesifik
+./bin/yourbrowser https://mamamas.xyz/this-party-dead-2026
+
+# Mode Incognito / Private
+./bin/yourbrowser --incognito
 ```
+
+### 2. Memasang ke Menu Aplikasi Desktop Linux
+```bash
+./scripts/install_desktop.sh
+```
+Setelah dijalankan, aplikasi akan terdaftar di menu sistem Anda (misal Linux Mint Menu / GNOME / KDE) dengan nama **YourBrowser**.
+
+### 3. Otomasi Pengujian Streaming & Anti-Popup
+Untuk memverifikasi bahwa browser memutar video streaming tanpa ada satupun popup iklan:
+```bash
+python3 ./scripts/verify_stream.py
+```
+Skrip ini akan memvalidasi secara otomatis:
+- Pemutaran stream berjalan lancar (`currentTime` bertambah).
+- Durasi media terdeteksi (~98 menit).
+- Audio bersuara aktif (`muted: false`, `volume: 1`).
+- Jumlah tab/window popup iklan yang terbuka adalah **0** (bersih total).
+
+---
+
+## Roadmap Multi-Platform
+
+* **Tahap 1 (Selesai)**: Linux Desktop (Mint/Ubuntu/Debian) - Distribusi Brave Engine mandiri, Shield Booster, integrasi desktop, dan verifikasi streaming sempurna.
+* **Tahap 2**: Windows Desktop - Pengemasan executable wrapper (`yourbrowser.exe`), installer InnoSetup/MSI, dan integrasi Registry browser default.
+* **Tahap 3**: Android Mobile - Arsitektur Brave-core / GeckoView Android wrapper dengan porting modul Shield Booster ke WebView / WebExtension API mobile.

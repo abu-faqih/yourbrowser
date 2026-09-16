@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YourBrowser - UI/UX Design Verification Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur sticky top-0 z-50 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-bold">YB</div>
+      <div>
+        <h1 class="text-lg font-bold text-white tracking-tight">YourBrowser: UI/UX Verification Hub</h1>
+        <p class="text-xs text-gray-400">Verifikasi visual & interaksi tanpa perangkat fisik Android</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400 mono bg-gray-800 px-2.5 py-1 rounded-md border border-gray-700">Viewport: 390 × 844 px (Mobile)</span>
+    </div>
+  </header>
+
+  <!-- Content Grid -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6">
+    <div class="mb-6 flex flex-wrap gap-2 items-center justify-between">
+      <div class="text-sm text-gray-400">Pilih modul layar untuk pratinjau interaktif:</div>
+      <div class="flex gap-2">
+        <button id="btn-dark" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-500 text-gray-950">Dark Mode (Default)</button>
+        <button id="btn-light" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700">Light Mode</button>
+      </div>
+    </div>
+
+    <!-- Screen Navigator & Preview Container -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Screen List Sidebar -->
+      <div class="lg:col-span-4 space-y-2" id="screen-list">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Device Frame Mockup -->
+      <div class="lg:col-span-8 flex flex-col items-center justify-center p-4 bg-gray-900/50 border border-gray-800 rounded-2xl">
+        <div class="flex items-center justify-between w-full max-w-[390px] mb-3 px-1 text-xs text-gray-400">
+          <span id="active-title" class="font-medium text-gray-200">01. Browser Utama & Reactive Sniffer</span>
+          <a id="external-link" href="#" target="_blank" class="text-cyan-400 hover:underline flex items-center gap-1">
+            Buka Tab Penuh ↗
+          </a>
+        </div>
+        
+        <!-- Mobile Chassis -->
+        <div class="relative w-[390px] h-[800px] rounded-[44px] p-3 bg-gray-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] border-4 border-gray-700 overflow-hidden">
+          <!-- Dynamic Island / Notch -->
+          <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-4 bg-gray-950 rounded-full z-30 pointer-events-none"></div>
+          <!-- Preview Iframe -->
+          <iframe id="preview-frame" class="w-full h-full rounded-[34px] bg-black border-0" src="01_browser_utama_reactive_sniffer/code.html"></iframe>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const screens = [
+      { id: '01', title: '01. Browser Utama & Reactive Sniffer', desc: 'Deteksi video real-time & address bar', dark: '01_browser_utama_reactive_sniffer/code.html', light: '01_browser_utama_reactive_sniffer_light_mode/code.html' },
+      { id: '02', title: '02. Zero-Knowledge Vault Auth', desc: 'Dialog autentikasi sandi terenkripsi', dark: '02_dialog_autentikasi_vault_zero_knowledge/code.html', light: '02_dialog_autentikasi_vault_zero_knowledge_light_mode/code.html' },
+      { id: '03', title: '03. Media Grabber Bottom Sheet', desc: 'Daftar resolusi, audio stream & download', dark: '03_media_grabber_bottom_sheet/code.html', light: '03_media_grabber_bottom_sheet_light_mode/code.html' },
+      { id: '04', title: '04. Status Unduhan Aktif & Muxing', desc: 'Progress parallel chunks & local remux', dark: '04_status_unduhan_aktif_muxing/code.html', light: '04_status_unduhan_aktif_muxing_light_mode/code.html' },
+      { id: '05', title: '05. Tab Switcher & Multi-Vault', desc: 'Isolasi tab dan navigasi multi-sesi', dark: '05_tab_switcher_session_isolation/code.html', light: '05_tab_switcher_session_isolation_light_mode/code.html' },
+      { id: '06', title: '06. Vault Media Library', desc: 'Penyimpanan terenkripsi & pemutar media', dark: '06_vault_media_library_downloads/code.html', light: '06_vault_media_library_downloads_light_mode/code.html' }
+    ];
+
+    let currentMode = 'dark';
+    let currentIdx = 0;
+
+    const listEl = document.getElementById('screen-list');
+    const frameEl = document.getElementById('preview-frame');
+    const titleEl = document.getElementById('active-title');
+    const externalLink = document.getElementById('external-link');
+    const btnDark = document.getElementById('btn-dark');
+    const btnLight = document.getElementById('btn-light');
+
+    function renderList() {
+      listEl.innerHTML = '';
+      screens.forEach((screen, idx) => {
+        const item = document.createElement('button');
+        const isActive = idx === currentIdx;
+        item.className = `w-full text-left p-3.5 rounded-xl border transition-all ${
+          isActive 
+            ? 'bg-gray-800/90 border-cyan-500 shadow-md' 
+            : 'bg-gray-900/50 border-gray-800 hover:border-gray-700 hover:bg-gray-800/40'
+        }`;
+        item.innerHTML = `
+          <div class="font-semibold text-sm ${isActive ? 'text-cyan-400' : 'text-gray-200'}">${screen.title}</div>
+          <div class="text-xs text-gray-400 mt-0.5">${screen.desc}</div>
+        `;
+        item.onclick = () => selectScreen(idx);
+        listEl.appendChild(item);
+      });
+    }
+
+    function selectScreen(idx) {
+      currentIdx = idx;
+      const target = screens[idx];
+      const url = currentMode === 'dark' ? target.dark : target.light;
+      frameEl.src = url;
+      titleEl.textContent = `${target.title} (${currentMode === 'dark' ? 'Dark' : 'Light'})`;
+      externalLink.href = url;
+      renderList();
+    }
+
+    btnDark.onclick = () => {
+      currentMode = 'dark';
+      btnDark.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-500 text-gray-950';
+      btnLight.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700';
+      selectScreen(currentIdx);
+    };
+
+    btnLight.onclick = () => {
+      currentMode = 'light';
+      btnLight.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-500 text-gray-950';
+      btnDark.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700';
+      selectScreen(currentIdx);
+    };
+
+    renderList();
+    selectScreen(0);
+  </script>
+</body>
+</html>

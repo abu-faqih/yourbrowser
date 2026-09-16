@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "YourBrowser Shield Booster",
+  "version": "1.0.0",
+  "description": "High-performance popup, popunder, and click-hijacking neutralization engine for YourBrowser",
+  "permissions": [
+    "declarativeNetRequest",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["isolated_content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}
