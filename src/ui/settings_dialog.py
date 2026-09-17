@@ -292,6 +292,10 @@ class SettingsDialog(QDialog):
         self.cb_shields_lion.setChecked(self.settings_manager.get("show_shields_lion", True))
         form_tb.addRow("", self.cb_shields_lion)
 
+        self.cb_system_titlebar = QCheckBox("Use native system title bar and window borders", grp_tb)
+        self.cb_system_titlebar.setChecked(self.settings_manager.get("use_system_title_bar", False))
+        form_tb.addRow("", self.cb_system_titlebar)
+
         self.homepage_input = QLineEdit(grp_tb)
         self.homepage_input.setStyleSheet(rounded_input(height=34, radius=Radii.SM))
         self.homepage_input.setText(self.settings_manager.get("homepage", "https://search.brave.com"))
@@ -495,6 +499,7 @@ class SettingsDialog(QDialog):
         self.settings_manager.set("show_home_button", self.cb_home_btn.isChecked())
         self.settings_manager.set("show_bookmarks_bar", self.cb_bmarks_bar.isChecked())
         self.settings_manager.set("show_shields_lion", self.cb_shields_lion.isChecked())
+        self.settings_manager.set("use_system_title_bar", self.cb_system_titlebar.isChecked())
         self.settings_manager.set("homepage", self.homepage_input.text().strip() or "https://search.brave.com")
         self.settings_manager.set("new_tab_url", self.newtab_input.text().strip() or "https://search.brave.com")
 

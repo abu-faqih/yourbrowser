@@ -10,10 +10,11 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QLineEdit, QDialog, QCheckBox,
     QGridLayout, QScrollArea, QFrame, QMessageBox
 )
-from PyQt6.QtCore import Qt, QEvent
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtCore import Qt, QEvent, QPoint
+from PyQt6.QtGui import QKeySequence, QShortcut, QMouseEvent
 
 from src.core.profile_manager import ProfileManager, DEFAULT_AVATAR_COLORS
+from src.core.browser_data import SettingsManager
 from src.resources.style import BRAVE_THEME_QSS
 from src.resources.icons import create_svg_icon, create_svg_pixmap
 from src.resources.design_system import (
@@ -21,6 +22,7 @@ from src.resources.design_system import (
     pill_button_primary, pill_button_secondary, pill_badge, rounded_input
 )
 from src.ui.browser_window import YourBrowserWindow
+from src.ui.window_controls import WindowControls, DraggableHeaderWidget, FramelessResizeMixin
 
 
 class ProfilePasswordDialog(QDialog):
@@ -276,12 +278,13 @@ class ProfileCard(QFrame):
         super().mousePressEvent(event)
 
 
-class DashboardWindow(QMainWindow):
+class DashboardWindow(QMainWindow, FramelessResizeMixin):
     """Main Dashboard Window for Profile Selection & Management."""
 
     def __init__(self, profile_manager: Optional[ProfileManager] = None, initial_url: Optional[str] = None):
         super().__init__()
         self.profile_manager = profile_manager if profile_manager else ProfileManager()
+        self.settings_manager = SettingsManager()
         self.initial_url = initial_url
         self.show_hidden = False
         self.active_browser_window = None
@@ -293,6 +296,11 @@ class DashboardWindow(QMainWindow):
         from src.resources.icons import get_app_icon, get_app_pixmap
         self.setWindowIcon(get_app_icon())
 
+        self.use_system_title_bar = self.settings_manager.get("use_system_title_bar", False)
+        if not self.use_system_title_bar:
+            self.setWindowFlags(self.windowFlags() | Qt.WindowType.FramelessWindowHint)
+        self.setMouseTracking(True)
+
         self.setup_ui()
         self.setup_shortcuts()
         self.refresh_profiles()
@@ -300,9 +308,32 @@ class DashboardWindow(QMainWindow):
     def setup_ui(self):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
-        self.main_layout = QVBoxLayout(central_widget)
-        self.main_layout.setContentsMargins(36, 32, 36, 32)
+        root_layout = QVBoxLayout(central_widget)
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+
+        # Integrated Top Bar with Draggable Area & Window Controls
+        top_bar = DraggableHeaderWidget(self)
+        top_bar_layout = QHBoxLayout(top_bar)
+        top_bar_layout.setContentsMargins(18, 6, 0, 0)
+        top_bar_layout.setSpacing(8)
+
+        top_title = QLabel("YourBrowser", top_bar)
+        top_title.setStyleSheet("font-size: 11px; font-weight: 700; color: #64748B; letter-spacing: 0.5px;")
+        top_bar_layout.addWidget(top_title)
+        top_bar_layout.addStretch()
+
+        self.window_controls = WindowControls(self, show_max=True, height=32)
+        if self.use_system_title_bar:
+            self.window_controls.hide()
+        top_bar_layout.addWidget(self.window_controls)
+        root_layout.addWidget(top_bar)
+
+        content_widget = QWidget(self)
+        self.main_layout = QVBoxLayout(content_widget)
+        self.main_layout.setContentsMargins(36, 14, 36, 32)
         self.main_layout.setSpacing(22)
+        root_layout.addWidget(content_widget, stretch=1)
 
         # Header Bar
         header_widget = QWidget(self)
@@ -544,3 +575,24 @@ class DashboardWindow(QMainWindow):
         self.show()
         self.activateWindow()
         self.raise_()
+
+    def changeEvent(self, event: QEvent):
+        """Update window controls on maximize/restore."""
+        if event.type() == QEvent.Type.WindowStateChange:
+            if hasattr(self, "window_controls") and self.window_controls:
+                self.window_controls.update_maximize_icon()
+        super().changeEvent(event)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if self.handle_frameless_mouse_press(event):
+            return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        self.handle_frameless_mouse_move(event)
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event):
+        self.unsetCursor()
+        super().leaveEvent(event)
+

@@ -105,6 +105,7 @@ DEFAULT_SETTINGS = {
     "show_home_button": True,
     "show_bookmarks_bar": False,
     "show_shields_lion": True,
+    "use_system_title_bar": False,
 
     # Brave Shields & Privacy
     "shields_enabled_by_default": True,

@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import (
     QMessageBox, QProgressBar, QLabel, QFrame, QMenu,
     QSizePolicy
 )
-from PyQt6.QtCore import QUrl, Qt, QTimer, QSize, pyqtSignal
-from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
+from PyQt6.QtCore import QUrl, Qt, QTimer, QSize, pyqtSignal, QEvent, QPoint
+from PyQt6.QtGui import QIcon, QKeySequence, QShortcut, QMouseEvent
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import (
     QWebEngineProfile, QWebEnginePage, QWebEngineSettings,
@@ -38,6 +38,7 @@ from src.ui.bookmarks_dialog import BookmarksDialog
 from src.ui.downloads_dialog import DownloadsDialog
 from src.ui.settings_dialog import SettingsDialog
 from src.ui.extensions_dialog import ExtensionsDialog
+from src.ui.window_controls import WindowControls, DraggableHeaderWidget, FramelessResizeMixin
 from src.resources.style import BRAVE_THEME_QSS, get_theme_stylesheet
 from src.resources.icons import create_svg_icon, create_svg_pixmap
 
@@ -95,7 +96,7 @@ class TabContainer(QWidget):
         self.tab_unlocked.emit()
 
 
-class YourBrowserWindow(QMainWindow):
+class YourBrowserWindow(QMainWindow, FramelessResizeMixin):
     """Main Application Window for YourBrowser."""
 
     def __init__(
@@ -137,6 +138,12 @@ class YourBrowserWindow(QMainWindow):
 
         self.security_manager = SecurityManager()
         self.download_manager = DownloadManager()
+
+        # Frameless modern browser setup
+        self.use_system_title_bar = self.settings_manager.get("use_system_title_bar", False)
+        if not self.use_system_title_bar:
+            self.setWindowFlags(self.windowFlags() | Qt.WindowType.FramelessWindowHint)
+        self.setMouseTracking(True)
 
         # Closed tabs stack for Ctrl+Shift+T
         self.closed_tabs = []
@@ -230,17 +237,17 @@ class YourBrowserWindow(QMainWindow):
         main_layout.setSpacing(0)
 
         # ==========================================================
-        # 1. TOP TAB STRIP
+        # 1. TOP TAB STRIP (Integrated Modern Title Bar)
         # ==========================================================
-        tab_strip_widget = QWidget(self)
-        tab_strip_widget.setObjectName("top_tab_strip")
-        tab_strip_layout = QHBoxLayout(tab_strip_widget)
-        tab_strip_layout.setContentsMargins(8, 6, 8, 0)
-        tab_strip_layout.setSpacing(4)
+        self.tab_strip_widget = DraggableHeaderWidget(self)
+        self.tab_strip_widget.setObjectName("top_tab_strip")
+        self.tab_strip_layout = QHBoxLayout(self.tab_strip_widget)
+        self._update_tab_strip_margins()
+        self.tab_strip_layout.setSpacing(4)
 
         # Incognito indicator in tab strip if private
         if self.is_incognito:
-            incog_badge = QFrame(tab_strip_widget)
+            incog_badge = QFrame(self.tab_strip_widget)
             incog_badge.setStyleSheet(
                 "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8B5CF6, stop:1 #6366F1);"
                 "border-radius: 9999px; margin-right: 6px;"
@@ -254,9 +261,9 @@ class YourBrowserWindow(QMainWindow):
             ib_txt.setStyleSheet("color: #FFFFFF; font-weight: 700; font-size: 11px;")
             ib_layout.addWidget(ib_ico)
             ib_layout.addWidget(ib_txt)
-            tab_strip_layout.addWidget(incog_badge)
+            self.tab_strip_layout.addWidget(incog_badge)
 
-        self.tab_bar = QTabBar(tab_strip_widget)
+        self.tab_bar = QTabBar(self.tab_strip_widget)
         self.tab_bar.setTabsClosable(True)
         self.tab_bar.setMovable(True)
         self.tab_bar.setIconSize(QSize(16, 16))
@@ -264,19 +271,25 @@ class YourBrowserWindow(QMainWindow):
         self.tab_bar.customContextMenuRequested.connect(self.on_tab_context_menu)
         self.tab_bar.tabCloseRequested.connect(self.close_tab)
         self.tab_bar.currentChanged.connect(self.on_tab_changed)
-        tab_strip_layout.addWidget(self.tab_bar)
+        self.tab_strip_layout.addWidget(self.tab_bar)
 
         # New Tab Button
-        self.new_tab_btn = QPushButton(tab_strip_widget)
+        self.new_tab_btn = QPushButton(self.tab_strip_widget)
         self.new_tab_btn.setObjectName("new_tab_btn")
         self.new_tab_btn.setIcon(create_svg_icon("plus", "#94A3B8", 16))
         self.new_tab_btn.setIconSize(QSize(16, 16))
         self.new_tab_btn.setToolTip("Open a new tab (Ctrl+T)")
         self.new_tab_btn.clicked.connect(lambda: self.add_new_tab())
-        tab_strip_layout.addWidget(self.new_tab_btn)
-        tab_strip_layout.addStretch()
+        self.tab_strip_layout.addWidget(self.new_tab_btn)
+        self.tab_strip_layout.addStretch()
 
-        main_layout.addWidget(tab_strip_widget)
+        # Modern Frameless Window Controls (Minimize, Maximize/Restore, Close)
+        self.window_controls = WindowControls(self, show_max=True, height=36)
+        if self.use_system_title_bar:
+            self.window_controls.hide()
+        self.tab_strip_layout.addWidget(self.window_controls)
+
+        main_layout.addWidget(self.tab_strip_widget)
 
         # ==========================================================
         # 2. NAVIGATION TOOLBAR
@@ -1145,4 +1158,34 @@ class YourBrowserWindow(QMainWindow):
                     page.deleteLater()
             widget.deleteLater()
         super().closeEvent(event)
+
+    def _update_tab_strip_margins(self):
+        """Adjust tab strip top margin depending on maximized state."""
+        if hasattr(self, "tab_strip_layout"):
+            if self.isMaximized():
+                self.tab_strip_layout.setContentsMargins(8, 0, 0, 0)
+            else:
+                self.tab_strip_layout.setContentsMargins(8, 4, 0, 0)
+
+    def changeEvent(self, event: QEvent):
+        """Handle window state changes (maximize/restore) for frameless layout."""
+        if event.type() == QEvent.Type.WindowStateChange:
+            if hasattr(self, "window_controls") and self.window_controls:
+                self.window_controls.update_maximize_icon()
+            self._update_tab_strip_margins()
+        super().changeEvent(event)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if self.handle_frameless_mouse_press(event):
+            return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        self.handle_frameless_mouse_move(event)
+        super().mouseMoveEvent(event)
+
+    def leaveEvent(self, event):
+        self.unsetCursor()
+        super().leaveEvent(event)
+
 

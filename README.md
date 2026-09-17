@@ -38,6 +38,7 @@ yourbrowser/
 │   │   ├── find_in_page.py             # Floating search bar cari teks di halaman (Ctrl+F)
 │   │   ├── settings_dialog.py          # Dialog pengaturan mesin pencari & browser
 │   │   ├── shields_panel.py            # Dropdown popup panel interaktif Brave Shields
+│   │   ├── window_controls.py          # Kontrol jendela frameless modern (Min, Max, Close & Draggable header)
 │   │   └── lock_modal.py               # Dialog set password & overlay pengunci tab
 │   └── resources/
 │       ├── design_system.py            # Modul Design System tokens (Colors, Gradients, Radii, Typography)
@@ -137,7 +138,14 @@ yourbrowser/
 - Aplikasi secara otomatis mengintegrasikan tema sistem GTK3 (`QT_QPA_PLATFORMTHEME=gtk3`) di lingkungan Linux.
 - Dialog sistem native (buka berkas, pilih folder download, simpan halaman) serta scrollbar dan window frame beradaptasi selaras dengan desktop environment pengguna.
 
-### 15. Pintasan Keyboard Standar (Keyboard Shortcuts)
+### 15. Tampilan Jendela Modern Frameless (Client-Side Decoration / CSD)
+- Title bar jadul bawaan OS dihilangkan secara default; deretan tab dinaikkan ke tepi paling atas jendela seperti browser modern (Google Chrome, Brave, Edge).
+- Menghemat ruang vertikal 30–40 px dan memperluas area pandang penjelajahan web.
+- Dilengkapi **Custom Window Controls** (Minimize `—`, Maximize/Restore `□`/`❐`, Close `✕`) di pojok kanan atas tab bar dengan efek hover modern (hover merah pada tombol close).
+- Mendukung *Native Window Dragging & Snapping* serta *Edge Resizing* via API Qt 6 (`startSystemMove()` dan `startSystemResize()`).
+- Opsi switchable: Pengguna yang tetap menginginkan title bar sistem bawaan OS dapat mengaktifkannya melalui menu **Settings (`Ctrl+,`) > Appearance > "Use native system title bar and window borders"**.
+
+### 16. Pintasan Keyboard Standar (Keyboard Shortcuts)
 | Shortcut | Konteks | Aksi |
 | :--- | :--- | :--- |
 | `Ctrl+H` | Dashboard | Sembunyikan / Tampilkan profil rahasia (*Toggle Hidden Profiles*) |
