@@ -69,7 +69,7 @@ yourbrowser/
 ### 1. Dashboard Profil & Alur Onboarding Perdana
 - Saat pertama kali membuka peramban, aplikasi menampilkan layar **Dashboard** bergaya Brave Obsidian Dark.
 - Jika belum ada profil yang dibuat, sistem otomatis menyajikan alur onboarding interaktif untuk membuat profil pertama Anda.
-- Setiap kartu profil menampilkan inisial avatar berwarna, nama akun, badge status proteksi (Locked), dan badge profil tersembunyi (Hidden) dengan ikon vektor SVG tajam.
+- Setiap kartu profil menampilkan inisial avatar berwarna, nama akun, serta tombol aksi dengan estetika minimalis dan bersih tanpa badge status yang merusak stealth mode.
 
 ### 2. Isolasi Penuh Antar Profil (Session & Data Isolation)
 - Setiap profil memiliki direktori terpisah di `~/.config/yourbrowser/profiles/<profile_id>/`.
@@ -78,8 +78,9 @@ yourbrowser/
 ### 3. Proteksi Password Profil & Mode Profil Tersembunyi (Ctrl+H Stealth)
 - Profil dapat dikunci dengan kata sandi saat dibuat atau diedit. Pembukaan profil terkunci memerlukan verifikasi kata sandi sebelum browser dibuka.
 - Profil dapat ditandai sebagai *Hidden* (tersembunyi).
-- **Murni Stealth (Tanpa Petunjuk/Tombol UI)**: Tidak ada petunjuk teks, tombol, ataupun badge pada antarmuka yang membocorkan keberadaan profil tersembunyi.
-- Pada Dashboard, tekan tombol pintasan **`Ctrl+H`** untuk menampilkan (*reveal*) atau menyembunyikan (*hide*) profil-profil rahasia tersebut.
+- **Murni Stealth (Tanpa Petunjuk/Tombol/Badge UI)**: Tidak ada petunjuk teks, tombol, maupun badge pada kartu profil yang membocorkan keberadaan atau status profil tersembunyi.
+- Secara *default*, profil tersembunyi tidak pernah muncul di Dashboard saat aplikasi dibuka atau saat kembali dari jendela browser.
+- Pada Dashboard, tekan tombol pintasan **`Ctrl+H`** untuk menampilkan (*reveal*) atau menyembunyikan (*hide*) profil-profil rahasia tersebut secara instan.
 
 ### 4. Persistensi Sesi Tab Otomatis (Tab Session Persistence)
 - Seluruh tab yang sedang aktif di dalam profil tidak akan hilang ketika jendela browser ditutup atau ketika Anda kembali ke Dashboard.

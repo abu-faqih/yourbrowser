@@ -132,6 +132,23 @@ class TestDashboardIntegration(unittest.TestCase):
         self.assertGreaterEqual(browser2.count(), 2)
         browser2.close()
 
+    def test_return_to_dashboard_resets_stealth(self):
+        """Returning to dashboard should reset show_hidden to False for stealth security."""
+        self.dashboard.show_hidden = True
+        self.dashboard.return_to_dashboard()
+        self.assertFalse(self.dashboard.show_hidden)
+
+    def test_profile_card_clean_no_unwanted_badges(self):
+        """ProfileCard should not contain cut-off status badges to preserve clean stealth UI."""
+        from src.ui.dashboard_window import ProfileCard
+        p = self.pm.create_profile("Stealth Profile", password="secret", is_hidden=True)
+        card = ProfileCard(p, on_select=lambda x: None, on_delete=lambda x: None)
+        # Verify launch button exists
+        self.assertIsNotNone(card.launch_btn)
+        # Verify no badges_layout attribute
+        self.assertFalse(hasattr(card, "badges_layout"))
+        card.deleteLater()
+
 
 if __name__ == "__main__":
     unittest.main()

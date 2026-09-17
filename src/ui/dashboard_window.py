@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QLineEdit, QDialog, QCheckBox,
     QGridLayout, QScrollArea, QFrame, QMessageBox
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QEvent
 from PyQt6.QtGui import QKeySequence, QShortcut
 
 from src.core.profile_manager import ProfileManager, DEFAULT_AVATAR_COLORS
@@ -244,41 +244,6 @@ class ProfileCard(QFrame):
         name_lbl.setStyleSheet(f"font-size: 15px; font-weight: 700; color: {Colors.TEXT_PRIMARY};")
         layout.addWidget(name_lbl)
 
-        # Status Badges in Pill shape
-        badges_layout = QHBoxLayout()
-        badges_layout.setSpacing(6)
-        badges_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        if profile.get("has_password", False):
-            lock_badge = QFrame(self)
-            lock_badge.setStyleSheet(f"background-color: {Colors.STATUS_DANGER_BG}; border: 1px solid {Colors.STATUS_DANGER}; border-radius: 9999px; padding: 2px 8px;")
-            lb_layout = QHBoxLayout(lock_badge)
-            lb_layout.setContentsMargins(4, 2, 6, 2)
-            lb_layout.setSpacing(4)
-            lb_ico = QLabel(lock_badge)
-            lb_ico.setPixmap(create_svg_pixmap("lock", "#FCA5A5", 11))
-            lb_txt = QLabel("Locked", lock_badge)
-            lb_txt.setStyleSheet("color: #FCA5A5; font-size: 10px; font-weight: 700;")
-            lb_layout.addWidget(lb_ico)
-            lb_layout.addWidget(lb_txt)
-            badges_layout.addWidget(lock_badge)
-
-        if profile.get("is_hidden", False):
-            hidden_badge = QFrame(self)
-            hidden_badge.setStyleSheet(f"background-color: {Colors.SURFACE_3}; border: 1px solid {Colors.ACCENT_CYAN}; border-radius: 9999px; padding: 2px 8px;")
-            hb_layout = QHBoxLayout(hidden_badge)
-            hb_layout.setContentsMargins(4, 2, 6, 2)
-            hb_layout.setSpacing(4)
-            hb_ico = QLabel(hidden_badge)
-            hb_ico.setPixmap(create_svg_pixmap("eye", Colors.ACCENT_CYAN, 11))
-            hb_txt = QLabel("Hidden", hidden_badge)
-            hb_txt.setStyleSheet(f"color: {Colors.ACCENT_CYAN}; font-size: 10px; font-weight: 700;")
-            hb_layout.addWidget(hb_ico)
-            hb_layout.addWidget(hb_txt)
-            badges_layout.addWidget(hidden_badge)
-
-        layout.addLayout(badges_layout)
-
         # Launch Button (Pill Primary Flame)
         self.launch_btn = QPushButton("Open Profile", self)
         self.launch_btn.setStyleSheet(pill_button_primary(height=32, font_size="12px"))
@@ -412,6 +377,20 @@ class DashboardWindow(QMainWindow):
             sc.activated.connect(self.toggle_hidden_profiles)
             self._shortcuts.append(sc)
 
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app:
+            app.installEventFilter(self)
+
+    def eventFilter(self, watched, event):
+        """Catch Ctrl+H even when child widgets (buttons, line edits, scrolls) have focus."""
+        if event.type() == QEvent.Type.KeyPress:
+            if (event.modifiers() & Qt.KeyboardModifier.ControlModifier) and event.key() == Qt.Key.Key_H:
+                if self.isVisible() and self.isActiveWindow():
+                    self.toggle_hidden_profiles()
+                    return True
+        return super().eventFilter(watched, event)
+
     def keyPressEvent(self, event):
         """Hardware fallback key press handler for Ctrl+H."""
         if (event.modifiers() & Qt.KeyboardModifier.ControlModifier) and event.key() == Qt.Key.Key_H:
@@ -498,11 +477,7 @@ class DashboardWindow(QMainWindow):
     def open_create_profile_dialog(self):
         dialog = CreateProfileDialog(self.profile_manager, self)
         if dialog.exec() == QDialog.DialogCode.Accepted and dialog.created_profile:
-            # If newly created profile is hidden, automatically reveal hidden profiles so user sees it
-            if dialog.created_profile.get("is_hidden", False) and not self.show_hidden:
-                self.toggle_hidden_profiles()
-            else:
-                self.refresh_profiles()
+            self.refresh_profiles()
             self.select_profile(dialog.created_profile)
 
     def select_profile(self, profile: Dict[str, Any]):
@@ -554,6 +529,7 @@ class DashboardWindow(QMainWindow):
 
     def return_to_dashboard(self):
         """Called by browser window when user clicks Dashboard button."""
+        self.show_hidden = False
         self.refresh_profiles()
         self.show()
         self.activateWindow()
