@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 APP_DIR="$ROOT_DIR/build/appimage/YourBrowser.AppDir"
 DIST_DIR="$ROOT_DIR/dist"
 OUTPUT_APPIMAGE="$DIST_DIR/YourBrowser-${VERSION}-x86_64.AppImage"

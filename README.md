@@ -205,7 +205,7 @@ python3 -m unittest discover tests/
 python3 tests/test_stream_native.py
 ```
 
-### 4. Membangun & Menjalankan Portable AppImage (v1.0.0)
+### 4. Membangun & Menjalankan Portable AppImage (v1.1.0)
 Aplikasi mendukung mode portabel murni. Seluruh profil, bookmark, riwayat, sesi tab, dan cache akan disimpan secara otomatis di folder `yourbrowser_data/` yang berada tepat di samping berkas `.AppImage` (atau di `<nama>.AppImage.home/`). Anda dapat memindahkan file AppImage beserta foldernya ke flashdisk atau komputer lain tanpa kehilangan data sedikitpun!
 
 ```bash
@@ -218,7 +218,7 @@ Aplikasi mendukung mode portabel murni. Seluruh profil, bookmark, riwayat, sesi 
 ./scripts/build_appimage.sh --clean
 
 # Menjalankan Portable AppImage
-./dist/YourBrowser-1.0.0-x86_64.AppImage
+./dist/YourBrowser-1.1.0-x86_64.AppImage
 ```
 
 ---
