@@ -155,18 +155,25 @@ yourbrowser/
 
 ### 1. Menjalankan Peramban
 ```bash
-# Meluncurkan Dashboard YourBrowser dari terminal
+# Meluncurkan Dashboard YourBrowser langsung dari terminal mana saja (karena telah terinstal di ~/.local/bin)
+yourbrowser
+
+# Atau via path direktori proyek
 ./bin/yourbrowser
 
 # Atau membuka langsung URL spesifik
-./bin/yourbrowser https://search.brave.com
+yourbrowser https://search.brave.com
 ```
 
-### 2. Menginstal Shortcut ke Menu Desktop Linux
+### 2. Menginstal Shortcut ke Menu Desktop Linux & Terminal PATH
 ```bash
 ./scripts/install_desktop.sh
 ```
-Aplikasi akan langsung muncul di menu aplikasi Linux Mint / Ubuntu Anda dengan nama **YourBrowser**.
+Perintah di atas secara otomatis:
+- Memasang shortcut `.desktop` ke `~/.local/share/applications/yourbrowser.desktop`.
+- Memasang seluruh variasi ukuran ikon aplikasi (SVG & PNG 16x16 s/d 512x512) ke `~/.local/share/icons/hicolor/`.
+- Memasang symlink binary ke `~/.local/bin/yourbrowser` agar dapat dipanggil langsung dari terminal mana pun.
+Aplikasi akan langsung muncul di menu aplikasi Linux Mint / Cinnamon / Ubuntu Anda dengan nama **YourBrowser** dan logo lengkap.
 
 ### 3. Menjalankan Seluruh Pengujian (Test Suite)
 ```bash

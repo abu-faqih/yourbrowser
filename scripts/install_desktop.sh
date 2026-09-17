@@ -20,6 +20,10 @@ for sz in 16 24 32 48 64 128 256 512; do
     fi
 done
 
+BIN_DIR="$HOME/.local/bin"
+mkdir -p "$BIN_DIR"
+ln -sf "$PROJECT_ROOT/bin/yourbrowser" "$BIN_DIR/yourbrowser"
+
 # Substitusi path absolut dinamis sesuai PROJECT_ROOT saat ini
 sed -e "s|/mnt/storage/aplikasi/yourbrowser|$PROJECT_ROOT|g" \
     "$PROJECT_ROOT/desktop/yourbrowser.desktop" > "$APPS_DIR/yourbrowser.desktop"
