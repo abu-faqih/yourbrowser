@@ -113,7 +113,7 @@ yourbrowser/
 - Arsitektur desain konsisten, modern, dan profesional berbasis token (`Colors`, `Gradients`, `Radii`, `Typography`) di `src/resources/design_system.py`.
 - Mengusung bentuk **pill / capsule** (`border-radius: 9999px` / `14-18px`) pada Omnibox, tombol aksi utama, dan badge status.
 - Dilengkapi gradasi linear dinamis (*Brave Flame Gradient*, *Cyber Cyan Gradient*, *Emerald Glow*, dan *Deep Obsidian Surface Depth*).
-- Dokumentasi lengkap tersedia pada [`DESIGN_SYSTEM.md`](file:///mnt/data/aplikasi/yourbrowser/DESIGN_SYSTEM.md).
+- Dokumentasi lengkap tersedia pada [`DESIGN_SYSTEM.md`](file:///mnt/storage/aplikasi/yourbrowser/DESIGN_SYSTEM.md).
 
 ### 12. Pintasan Keyboard Standar (Keyboard Shortcuts)
 | Shortcut | Konteks | Aksi |
