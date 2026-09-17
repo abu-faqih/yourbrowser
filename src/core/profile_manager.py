@@ -33,11 +33,16 @@ class ProfileManager(BaseStorage):
         self.profiles_dir = os.path.join(self.base_dir, "profiles")
         os.makedirs(self.profiles_dir, exist_ok=True)
 
+    def reload(self):
+        """Reload profiles from disk storage to stay synchronized."""
+        self._profiles_data = self._load({"profiles": []})
+
     def _get_profiles_list(self) -> List[Dict[str, Any]]:
         return self._profiles_data.setdefault("profiles", [])
 
     def list_profiles(self, include_hidden: bool = False) -> List[Dict[str, Any]]:
         """Return list of profiles. If include_hidden is False, hides profiles marked as hidden."""
+        self.reload()
         profiles = self._get_profiles_list()
         if include_hidden:
             return list(profiles)

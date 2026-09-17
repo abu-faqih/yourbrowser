@@ -370,12 +370,13 @@ class DashboardWindow(QMainWindow):
 
     def setup_shortcuts(self):
         """Register keyboard shortcuts for toggling hidden profiles across the entire window."""
-        self._shortcuts = []
-        for seq in ["Ctrl+H", "Ctrl+h", "Ctrl+Shift+H"]:
-            sc = QShortcut(QKeySequence(seq), self)
-            sc.setContext(Qt.ShortcutContext.ApplicationShortcut)
-            sc.activated.connect(self.toggle_hidden_profiles)
-            self._shortcuts.append(sc)
+        self._shortcut_1 = QShortcut(QKeySequence("Ctrl+H"), self)
+        self._shortcut_1.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self._shortcut_1.activated.connect(self.toggle_hidden_profiles)
+
+        self._shortcut_2 = QShortcut(QKeySequence("Ctrl+Shift+H"), self)
+        self._shortcut_2.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        self._shortcut_2.activated.connect(self.toggle_hidden_profiles)
 
         from PyQt6.QtWidgets import QApplication
         app = QApplication.instance()
@@ -384,11 +385,19 @@ class DashboardWindow(QMainWindow):
 
     def eventFilter(self, watched, event):
         """Catch Ctrl+H even when child widgets (buttons, line edits, scrolls) have focus."""
-        if event.type() == QEvent.Type.KeyPress:
-            if (event.modifiers() & Qt.KeyboardModifier.ControlModifier) and event.key() == Qt.Key.Key_H:
-                if self.isVisible() and self.isActiveWindow():
-                    self.toggle_hidden_profiles()
-                    return True
+        if event.type() in (QEvent.Type.KeyPress, QEvent.Type.ShortcutOverride):
+            is_ctrl = bool(event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+            is_h = event.key() == Qt.Key.Key_H
+            if is_ctrl and is_h:
+                if self.isVisible():
+                    # Only handle when dashboard is the visible view (browser window is hidden/none)
+                    if not self.active_browser_window or not self.active_browser_window.isVisible():
+                        if event.type() == QEvent.Type.ShortcutOverride:
+                            event.accept()
+                            return True
+                        self.toggle_hidden_profiles()
+                        event.accept()
+                        return True
         return super().eventFilter(watched, event)
 
     def keyPressEvent(self, event):
@@ -410,6 +419,7 @@ class DashboardWindow(QMainWindow):
             item = self.content_layout.takeAt(0)
             widget = item.widget()
             if widget:
+                widget.setParent(None)
                 widget.deleteLater()
 
         profiles = self.profile_manager.list_profiles(include_hidden=self.show_hidden)
