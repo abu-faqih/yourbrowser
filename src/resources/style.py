@@ -183,7 +183,9 @@ QPushButton#shield_btn {{
     font-weight: 700;
     font-size: 12px;
     border-radius: 16px;
-    padding: 6px 16px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 0 14px;
     border: 1px solid rgba(255, 255, 255, 0.22);
 }}
 
@@ -201,8 +203,10 @@ QPushButton#dashboard_btn {{
     background-color: {Colors.SURFACE_2};
     color: {Colors.TEXT_PRIMARY};
     border: 1px solid {Colors.BORDER_DEFAULT};
-    border-radius: 14px;
-    padding: 5px 14px;
+    border-radius: 16px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 0 14px;
     font-weight: 600;
     font-size: 12px;
 }}
@@ -224,7 +228,9 @@ QPushButton#lock_btn {{
     font-weight: 700;
     font-size: 12px;
     border-radius: 16px;
-    padding: 6px 16px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 0 14px;
     border: 1px solid rgba(255, 255, 255, 0.22);
 }}
 

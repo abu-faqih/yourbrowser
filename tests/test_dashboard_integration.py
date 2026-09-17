@@ -67,7 +67,6 @@ class TestDashboardIntegration(unittest.TestCase):
         # Trigger Ctrl+H toggle
         self.dashboard.toggle_hidden_profiles()
         self.assertTrue(self.dashboard.show_hidden)
-        self.assertTrue(self.dashboard.hidden_status_lbl.isVisible())
 
         # Now both profiles are visible
         visible_now = self.pm.list_profiles(include_hidden=self.dashboard.show_hidden)
@@ -76,7 +75,6 @@ class TestDashboardIntegration(unittest.TestCase):
         # Toggle back
         self.dashboard.toggle_hidden_profiles()
         self.assertFalse(self.dashboard.show_hidden)
-        self.assertFalse(self.dashboard.hidden_status_lbl.isVisible())
 
     def test_password_dialog_verification(self):
         """ProfilePasswordDialog should accept correct password and reject wrong password."""

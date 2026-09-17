@@ -75,17 +75,18 @@ yourbrowser/
 - Setiap profil memiliki direktori terpisah di `~/.config/yourbrowser/profiles/<profile_id>/`.
 - Cookies, cache, LocalStorage, IndexedDB, riwayat penjelajahan (`history.json`), bookmarks (`bookmarks.json`), serta preferensi (`settings.json`) terisolasi 100% dan tidak bercampur dengan profil lain.
 
-### 3. Proteksi Password Profil & Mode Profil Tersembunyi (Ctrl+H)
+### 3. Proteksi Password Profil & Mode Profil Tersembunyi (Ctrl+H Stealth)
 - Profil dapat dikunci dengan kata sandi saat dibuat atau diedit. Pembukaan profil terkunci memerlukan verifikasi kata sandi sebelum browser dibuka.
 - Profil dapat ditandai sebagai *Hidden* (tersembunyi).
-- Pada Dashboard, tekan tombol pintasan **`Ctrl+H`** untuk menampilkan (*reveal*) atau menyembunyikan (*hide*) profil-profil rahasia tersebut seketika.
+- **Murni Stealth (Tanpa Petunjuk/Tombol UI)**: Tidak ada petunjuk teks, tombol, ataupun badge pada antarmuka yang membocorkan keberadaan profil tersembunyi.
+- Pada Dashboard, tekan tombol pintasan **`Ctrl+H`** untuk menampilkan (*reveal*) atau menyembunyikan (*hide*) profil-profil rahasia tersebut.
 
 ### 4. Persistensi Sesi Tab Otomatis (Tab Session Persistence)
 - Seluruh tab yang sedang aktif di dalam profil tidak akan hilang ketika jendela browser ditutup atau ketika Anda kembali ke Dashboard.
 - Saat profil dibuka kembali dari Dashboard di masa mendatang, seluruh tab yang tersimpan akan langsung dimuat ulang ke posisi tab terakhir.
 
-### 5. Tombol Dashboard di Toolbar
-- Tombol `Lock Tab` pada toolbar navigasi diselaraskan menjadi tombol **Dashboard** dengan ikon vektor resolusi tinggi.
+### 5. Tombol Dashboard & Shields Seragam (Pill Rounded Corner)
+- Tombol **Shields** dan **Dashboard** pada toolbar navigasi memiliki ukuran tinggi (32px), padding (0 14px), font, serta *rounded corners* (border-radius 16px) yang sepenuhnya seragam dan simetris.
 - Menekan tombol Dashboard akan menyimpan sesi tab profil saat ini dan mengembalikan pengguna ke tampilan Dashboard manajemen profil.
 - Proteksi kunci tab individual tetap dapat diakses dengan mudah via klik kanan pada tab (Tab Context Menu).
 
@@ -131,7 +132,11 @@ yourbrowser/
 - Dilengkapi ekstensi bawaan **`YourBrowser Shield Booster`** (`extensions/shield-booster`) untuk netralisasi popup dan click-hijacking.
 - Mendukung pemasangan ekstensi baru secara langsung dari direktori (*Load Unpacked Extension...*) dan toggle aktivasi per ekstensi.
 
-### 14. Pintasan Keyboard Standar (Keyboard Shortcuts)
+### 14. Integrasi Native Tema GTK Linux (Cinnamon / GNOME / XFCE)
+- Aplikasi secara otomatis mengintegrasikan tema sistem GTK3 (`QT_QPA_PLATFORMTHEME=gtk3`) di lingkungan Linux.
+- Dialog sistem native (buka berkas, pilih folder download, simpan halaman) serta scrollbar dan window frame beradaptasi selaras dengan desktop environment pengguna.
+
+### 15. Pintasan Keyboard Standar (Keyboard Shortcuts)
 | Shortcut | Konteks | Aksi |
 | :--- | :--- | :--- |
 | `Ctrl+H` | Dashboard | Sembunyikan / Tampilkan profil rahasia (*Toggle Hidden Profiles*) |

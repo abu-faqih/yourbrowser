@@ -19,6 +19,10 @@ if PROJECT_ROOT not in sys.path:
 if "QTWEBENGINE_CHROMIUM_FLAGS" not in os.environ:
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
 
+# Ensure GTK platform theme is integrated if running in a GTK/GNOME/Cinnamon environment
+if sys.platform.startswith("linux") and "QT_QPA_PLATFORMTHEME" not in os.environ:
+    os.environ["QT_QPA_PLATFORMTHEME"] = "gtk3"
+
 from PyQt6.QtCore import Qt, QCoreApplication
 # Must be set before QApplication is instantiated for QtWebEngine
 QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)

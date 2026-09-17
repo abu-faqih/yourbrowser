@@ -14,6 +14,7 @@ SCRIPT_DIR="$(cd -P "$(dirname "$TARGET_FILE")" >/dev/null 2>&1 && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 export QTWEBENGINE_CHROMIUM_FLAGS="${QTWEBENGINE_CHROMIUM_FLAGS:---no-sandbox}"
+export QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME:-gtk3}"
 
 # Launch custom native YourBrowser
 exec python3 "$PROJECT_ROOT/src/app.py" "$@"

@@ -374,22 +374,6 @@ class DashboardWindow(QMainWindow):
         header_layout.addLayout(logo_box)
         header_layout.addStretch()
 
-        # Hidden profile status badge (Pill)
-        self.hidden_status_lbl = QLabel("", header_widget)
-        self.hidden_status_lbl.setStyleSheet(
-            pill_badge(Colors.SURFACE_3, Colors.ACCENT_CYAN, "11px") + f"border: 1px solid {Colors.ACCENT_CYAN}; padding: 6px 14px;"
-        )
-        self.hidden_status_lbl.hide()
-        header_layout.addWidget(self.hidden_status_lbl)
-
-        # Toggle Hidden Profiles Button (Interactive Pill Button)
-        self.toggle_hidden_btn = QPushButton(" Show Hidden", header_widget)
-        self.toggle_hidden_btn.setIcon(create_svg_icon("eye", "#94A3B8", 16))
-        self.toggle_hidden_btn.setToolTip("Toggle visibility of hidden profiles (Ctrl+H)")
-        self.toggle_hidden_btn.setStyleSheet(pill_button_secondary(height=38, font_size="13px"))
-        self.toggle_hidden_btn.clicked.connect(self.toggle_hidden_profiles)
-        header_layout.addWidget(self.toggle_hidden_btn)
-
         # Add Profile Button (Pill Primary Flame)
         self.add_profile_btn = QPushButton(" New Profile", header_widget)
         self.add_profile_btn.setIcon(create_svg_icon("plus", "#FFFFFF", 16))
@@ -419,12 +403,6 @@ class DashboardWindow(QMainWindow):
 
         self.main_layout.addWidget(self.scroll_area, stretch=1)
 
-        # Footer shortcut hint
-        footer_lbl = QLabel("Tip: Press Ctrl+H or click 'Show Hidden' to toggle visibility of hidden profiles", self)
-        footer_lbl.setStyleSheet(f"color: {Colors.TEXT_MUTED}; font-size: 11.5px;")
-        footer_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.main_layout.addWidget(footer_lbl)
-
     def setup_shortcuts(self):
         """Register keyboard shortcuts for toggling hidden profiles across the entire window."""
         self._shortcuts = []
@@ -443,35 +421,8 @@ class DashboardWindow(QMainWindow):
         super().keyPressEvent(event)
 
     def toggle_hidden_profiles(self):
-        """Toggle viewing of hidden profiles with visual feedback."""
+        """Toggle viewing of hidden profiles purely via keyboard combination."""
         self.show_hidden = not self.show_hidden
-        if self.show_hidden:
-            if hasattr(self, "toggle_hidden_btn"):
-                self.toggle_hidden_btn.setText(" Hide Hidden")
-                self.toggle_hidden_btn.setIcon(create_svg_icon("eye_off", Colors.ACCENT_CYAN, 16))
-                self.toggle_hidden_btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background-color: #1E293B;
-                        color: {Colors.ACCENT_CYAN};
-                        border: 1px solid {Colors.ACCENT_CYAN};
-                        border-radius: {Radii.PILL};
-                        font-weight: 700;
-                        font-size: 13px;
-                        padding: 0 16px;
-                    }}
-                    QPushButton:hover {{
-                        background-color: #26354A;
-                        color: #FFFFFF;
-                    }}
-                """)
-            self.hidden_status_lbl.setText("Hidden Profiles: Visible")
-            self.hidden_status_lbl.show()
-        else:
-            if hasattr(self, "toggle_hidden_btn"):
-                self.toggle_hidden_btn.setText(" Show Hidden")
-                self.toggle_hidden_btn.setIcon(create_svg_icon("eye", "#94A3B8", 16))
-                self.toggle_hidden_btn.setStyleSheet(pill_button_secondary(height=38, font_size="13px"))
-            self.hidden_status_lbl.hide()
         self.refresh_profiles()
 
     def refresh_profiles(self):
@@ -483,17 +434,14 @@ class DashboardWindow(QMainWindow):
                 widget.deleteLater()
 
         profiles = self.profile_manager.list_profiles(include_hidden=self.show_hidden)
-        all_profiles_count = len(self.profile_manager.list_profiles(include_hidden=True))
 
-        if all_profiles_count == 0:
+        if len(profiles) == 0:
             self.show_empty_onboarding()
-        elif len(profiles) == 0:
-            self.show_all_hidden_notice()
         else:
             self.show_profiles_grid(profiles)
 
     def show_empty_onboarding(self):
-        """Display friendly onboarding when no profiles exist yet."""
+        """Display friendly onboarding when no profiles exist or are shown."""
         box = QFrame(self.content_widget)
         box.setStyleSheet(f"""
             background: {Gradients.SURFACE_CARD};
@@ -515,46 +463,18 @@ class DashboardWindow(QMainWindow):
 
         desc = QLabel(
             "Each profile has completely isolated cookies, browsing history, tabs, and bookmarks.\n"
-            "Create your first profile to begin browsing safely.",
+            "Create a profile to begin browsing safely.",
             box
         )
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: {Typography.SIZE_BODY}; line-height: 1.5;")
         layout.addWidget(desc, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        create_btn = QPushButton(" Create Your First Profile", box)
+        create_btn = QPushButton(" Create Profile", box)
         create_btn.setIcon(create_svg_icon("plus", "#FFFFFF", 16))
         create_btn.setStyleSheet(pill_button_primary(height=42, font_size="14px"))
         create_btn.clicked.connect(self.open_create_profile_dialog)
         layout.addWidget(create_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        self.content_layout.addWidget(box)
-
-    def show_all_hidden_notice(self):
-        """Display notice when all existing profiles are currently hidden."""
-        box = QFrame(self.content_widget)
-        box.setStyleSheet(f"background: {Gradients.SURFACE_CARD}; border-radius: {Radii.LG}; padding: 30px; border: 1px solid {Colors.BORDER_DEFAULT};")
-        layout = QVBoxLayout(box)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setSpacing(12)
-
-        icon_lbl = QLabel(box)
-        icon_lbl.setPixmap(create_svg_pixmap("eye", Colors.ACCENT_CYAN, 40))
-        layout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        lbl = QLabel("All your profiles are currently hidden.", box)
-        lbl.setStyleSheet(f"font-size: 16px; font-weight: 700; color: #FFFFFF;")
-        layout.addWidget(lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        sub_lbl = QLabel("Press Ctrl+H or click below to reveal hidden profiles, or create a new one.", box)
-        sub_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 13px;")
-        layout.addWidget(sub_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        reveal_btn = QPushButton(" Show Hidden Profiles Now (Ctrl+H)", box)
-        reveal_btn.setIcon(create_svg_icon("eye", "#FFFFFF", 16))
-        reveal_btn.setStyleSheet(pill_button_primary(height=40, font_size="13px"))
-        reveal_btn.clicked.connect(self.toggle_hidden_profiles)
-        layout.addWidget(reveal_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.content_layout.addWidget(box)
 
