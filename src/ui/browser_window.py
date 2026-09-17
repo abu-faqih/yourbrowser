@@ -39,7 +39,7 @@ from src.ui.downloads_dialog import DownloadsDialog
 from src.ui.settings_dialog import SettingsDialog
 from src.ui.extensions_dialog import ExtensionsDialog
 from src.resources.style import BRAVE_THEME_QSS, get_theme_stylesheet
-from src.resources.icons import create_svg_icon
+from src.resources.icons import create_svg_icon, create_svg_pixmap
 
 
 class CustomWebEnginePage(QWebEnginePage):
@@ -250,6 +250,7 @@ class YourBrowserWindow(QMainWindow):
         self.tab_bar = QTabBar(tab_strip_widget)
         self.tab_bar.setTabsClosable(True)
         self.tab_bar.setMovable(True)
+        self.tab_bar.setIconSize(QSize(16, 16))
         self.tab_bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tab_bar.customContextMenuRequested.connect(self.on_tab_context_menu)
         self.tab_bar.tabCloseRequested.connect(self.close_tab)
@@ -276,18 +277,6 @@ class YourBrowserWindow(QMainWindow):
         nav_layout = QHBoxLayout(nav_toolbar)
         nav_layout.setContentsMargins(12, 6, 12, 6)
         nav_layout.setSpacing(8)
-
-        # Brand Logo in Toolbar
-        from src.resources.icons import get_app_pixmap
-        self.brand_logo_lbl = QLabel(nav_toolbar)
-        self.brand_logo_lbl.setObjectName("brand_logo_lbl")
-        self.brand_logo_lbl.setToolTip("YourBrowser - Modern Privacy Browser")
-        logo_pix = get_app_pixmap(24)
-        if not logo_pix.isNull():
-            self.brand_logo_lbl.setPixmap(logo_pix)
-            self.brand_logo_lbl.setFixedSize(24, 24)
-            self.brand_logo_lbl.setStyleSheet("margin-right: 4px;")
-            nav_layout.addWidget(self.brand_logo_lbl)
 
         # Navigation Action Buttons
         self.back_btn = QPushButton(nav_toolbar)
@@ -330,8 +319,10 @@ class YourBrowserWindow(QMainWindow):
         capsule_layout.setContentsMargins(10, 0, 10, 0)
         capsule_layout.setSpacing(6)
 
-        self.ssl_icon_lbl = QLabel("🔒", self.omnibox_capsule)
+        self.ssl_icon_lbl = QLabel(self.omnibox_capsule)
         self.ssl_icon_lbl.setObjectName("ssl_icon_lbl")
+        self.ssl_icon_lbl.setPixmap(create_svg_pixmap("lock", "#10B981", 14))
+        self.ssl_icon_lbl.setFixedSize(16, 16)
         capsule_layout.addWidget(self.ssl_icon_lbl)
 
         self.omnibox = QLineEdit(self.omnibox_capsule)
@@ -361,34 +352,20 @@ class YourBrowserWindow(QMainWindow):
         nav_layout.addWidget(self.omnibox_capsule, stretch=1)
 
         # Brave Shields Lion Button
-        self.shield_btn = QPushButton("🛡️ 0 Blocked", nav_toolbar)
+        self.shield_btn = QPushButton(" 0 Blocked", nav_toolbar)
         self.shield_btn.setObjectName("shield_btn")
+        self.shield_btn.setIcon(create_svg_icon("shield", "#FFFFFF", 16))
+        self.shield_btn.setIconSize(QSize(16, 16))
         self.shield_btn.setToolTip("Brave Shields - Privacy & Ad Protection")
         self.shield_btn.clicked.connect(self.show_shields_popup)
         nav_layout.addWidget(self.shield_btn)
 
-        # Profiles Dashboard Button (replaces Lock Tab on toolbar)
+        # Profiles Dashboard Button
         self.dashboard_btn = QPushButton(" Dashboard", nav_toolbar)
         self.dashboard_btn.setObjectName("dashboard_btn")
-        self.dashboard_btn.setIcon(create_svg_icon("dashboard", "#94A3B8", 16))
-        self.dashboard_btn.setIconSize(QSize(16, 16))
+        self.dashboard_btn.setIcon(create_svg_icon("dashboard", "#CBD5E1", 15))
+        self.dashboard_btn.setIconSize(QSize(15, 15))
         self.dashboard_btn.setToolTip("Back to Profiles Dashboard")
-        self.dashboard_btn.setStyleSheet("""
-            QPushButton#dashboard_btn {
-                background-color: #181D2C;
-                color: #CBD5E1;
-                border: 1px solid #263045;
-                border-radius: 14px;
-                padding: 5px 14px;
-                font-weight: 600;
-                font-size: 12px;
-            }
-            QPushButton#dashboard_btn:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #FF5500, stop:1 #FF2A54);
-                color: #FFFFFF;
-                border-color: rgba(255, 255, 255, 0.25);
-            }
-        """)
         self.dashboard_btn.clicked.connect(self.go_to_dashboard)
         nav_layout.addWidget(self.dashboard_btn)
 
@@ -649,7 +626,7 @@ class YourBrowserWindow(QMainWindow):
                     padding: 6px 16px;
                 """)
                 self.omnibox.setText("🔒 [Encrypted Tab Session]")
-                self.ssl_icon_lbl.setText("🔒")
+                self.ssl_icon_lbl.setPixmap(create_svg_pixmap("lock", "#EF4444", 14))
                 self.update_bookmark_icon("")
             else:
                 self.lock_btn.setText("🔒 Lock Tab")
@@ -657,7 +634,8 @@ class YourBrowserWindow(QMainWindow):
                 qurl = container.web_view.url()
                 url_str = qurl.toString() if not qurl.isEmpty() else ""
                 self.omnibox.setText(url_str)
-                self.ssl_icon_lbl.setText("🔒" if url_str.startswith("https://") else "🌐")
+                is_https = url_str.startswith("https://")
+                self.ssl_icon_lbl.setPixmap(create_svg_pixmap("lock" if is_https else "tab_globe", "#10B981" if is_https else "#94A3B8", 14))
                 self.update_bookmark_icon(url_str)
                 self.update_zoom_badge(container.web_view.zoomFactor())
 
@@ -665,7 +643,8 @@ class YourBrowserWindow(QMainWindow):
         if container == self.current_container() and not container.is_locked:
             url_str = qurl.toString()
             self.omnibox.setText(url_str)
-            self.ssl_icon_lbl.setText("🔒" if url_str.startswith("https://") else "🌐")
+            is_https = url_str.startswith("https://")
+            self.ssl_icon_lbl.setPixmap(create_svg_pixmap("lock" if is_https else "tab_globe", "#10B981" if is_https else "#94A3B8", 14))
             self.update_bookmark_icon(url_str)
 
     def on_title_changed(self, title, container):
@@ -874,7 +853,7 @@ class YourBrowserWindow(QMainWindow):
     # Shields Popup & Tab Lock
     # ==========================================================
     def on_ad_blocked(self, count, url):
-        self.shield_btn.setText(f"🛡️ {count} Blocked")
+        self.shield_btn.setText(f" {count} Blocked")
 
     def show_shields_popup(self):
         view = self.current_view()

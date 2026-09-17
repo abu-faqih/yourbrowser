@@ -42,7 +42,7 @@ QTabBar {{
 QTabBar::tab {{
     background-color: {Colors.SURFACE_1};
     color: {Colors.TEXT_SECONDARY};
-    padding: 8px 18px;
+    padding: 7px 14px 7px 12px;
     margin-right: 4px;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
@@ -194,6 +194,27 @@ QPushButton#shield_btn:hover {{
 
 QPushButton#shield_btn:pressed {{
     background: {Gradients.PRIMARY_FLAME_PRESSED};
+}}
+
+/* Profiles Dashboard Action Pill */
+QPushButton#dashboard_btn {{
+    background-color: {Colors.SURFACE_2};
+    color: {Colors.TEXT_PRIMARY};
+    border: 1px solid {Colors.BORDER_DEFAULT};
+    border-radius: 14px;
+    padding: 5px 14px;
+    font-weight: 600;
+    font-size: 12px;
+}}
+
+QPushButton#dashboard_btn:hover {{
+    background-color: {Colors.SURFACE_3};
+    border-color: {Colors.BORDER_HOVER};
+    color: #FFFFFF;
+}}
+
+QPushButton#dashboard_btn:pressed {{
+    background-color: {Colors.SURFACE_1};
 }}
 
 /* Cyber Security Lock Pill */
@@ -422,6 +443,31 @@ QPushButton.dialog-btn-danger {{
 
 QPushButton.dialog-btn-danger:hover {{
     background: {Gradients.DANGER_CRIMSON_HOVER};
+}}
+
+/* Global Checkbox Style */
+QCheckBox {{
+    color: {Colors.TEXT_PRIMARY};
+    font-size: 13px;
+    spacing: 8px;
+}}
+
+QCheckBox::indicator {{
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid {Colors.BORDER_DEFAULT};
+    background: {Colors.SURFACE_2};
+}}
+
+QCheckBox::indicator:hover {{
+    border-color: {Colors.BORDER_HOVER};
+}}
+
+QCheckBox::indicator:checked {{
+    background-color: {Colors.ACCENT_ORANGE};
+    border-color: {Colors.ACCENT_ORANGE};
+    image: url(/mnt/storage/aplikasi/yourbrowser/assets/icons/ui/check_white.png);
 }}
 
 /* ========================================================== */

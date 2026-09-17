@@ -68,8 +68,9 @@ class SettingsDialog(QDialog):
                 background: {Colors.SURFACE_2};
             }}
             QCheckBox::indicator:checked {{
-                background: {Colors.ACCENT_ORANGE};
+                background-color: {Colors.ACCENT_ORANGE};
                 border-color: {Colors.ACCENT_ORANGE};
+                image: url(/mnt/storage/aplikasi/yourbrowser/assets/icons/ui/check_white.png);
             }}
             QComboBox {{
                 background-color: {Colors.SURFACE_2};
@@ -141,15 +142,17 @@ class SettingsDialog(QDialog):
         """)
 
         categories = [
-            ("🛡️  Shields & Privacy", 0),
-            ("🎨  Appearance", 1),
-            ("🔍  Search Engines", 2),
-            ("🧩  Extensions", 3),
-            ("🗑️  Clear Data", 4),
+            ("shield", "Shields & Privacy", 0),
+            ("palette", "Appearance", 1),
+            ("search", "Search Engines", 2),
+            ("extension", "Extensions", 3),
+            ("trash", "Clear Data", 4),
         ]
-        for name, _ in categories:
-            item = QListWidgetItem(name)
+        for icon_name, label, _ in categories:
+            item = QListWidgetItem(label)
+            item.setIcon(create_svg_icon(icon_name, "#94A3B8", 16))
             self.nav_list.addItem(item)
+        self.nav_list.setIconSize(QSize(18, 18))
 
         self.nav_list.currentRowChanged.connect(self._on_category_changed)
         body_layout.addWidget(self.nav_list)

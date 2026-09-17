@@ -204,25 +204,42 @@ SVG_ICONS = {
         <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
         <line x1="12" y1="22.08" x2="12" y2="12"></line>
     </svg>
+    """,
+    "palette": """
+    <svg viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="13.5" cy="6.5" r=".5" fill="{color}"></circle>
+        <circle cx="17.5" cy="10.5" r=".5" fill="{color}"></circle>
+        <circle cx="8.5" cy="7.5" r=".5" fill="{color}"></circle>
+        <circle cx="6.5" cy="12.5" r=".5" fill="{color}"></circle>
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.562C22 6.5 17.5 2 12 2z"></path>
+    </svg>
+    """,
+    "check": """
+    <svg viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
     """
 }
 
-def create_svg_icon(name: str, color: str = "#94A3B8", size: int = 18) -> QIcon:
-    """Generate a crisp QIcon from an SVG definition with specified color and dimensions."""
+def create_svg_pixmap(name: str, color: str = "#94A3B8", size: int = 18) -> QPixmap:
+    """Generate a crisp transparent QPixmap from SVG definition."""
     template = SVG_ICONS.get(name)
     if not template:
-        return QIcon()
-    
+        return QPixmap()
     svg_data = template.replace("{color}", color).strip().encode("utf-8")
     renderer = QSvgRenderer(QByteArray(svg_data))
-    
     pixmap = QPixmap(size, size)
     pixmap.fill(Qt.GlobalColor.transparent)
-    
     painter = QPainter(pixmap)
     renderer.render(painter)
     painter.end()
-    
+    return pixmap
+
+def create_svg_icon(name: str, color: str = "#94A3B8", size: int = 18) -> QIcon:
+    """Generate a crisp QIcon from an SVG definition with specified color and dimensions."""
+    pixmap = create_svg_pixmap(name, color, size)
+    if pixmap.isNull():
+        return QIcon()
     return QIcon(pixmap)
 
 
