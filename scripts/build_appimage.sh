@@ -10,8 +10,28 @@ DIST_DIR="$ROOT_DIR/dist"
 OUTPUT_APPIMAGE="$DIST_DIR/YourBrowser-${VERSION}-x86_64.AppImage"
 RUNTIME="$ROOT_DIR/bin/tools/runtime-x86_64"
 
+COMPRESSION="gzip"
+FORCE_CLEAN=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --clean|-c)
+            FORCE_CLEAN=true
+            ;;
+        --xz)
+            COMPRESSION="xz"
+            ;;
+        --gzip)
+            COMPRESSION="gzip"
+            ;;
+    esac
+done
+
+CORES=$(nproc 2>/dev/null || echo 4)
+
 echo "=========================================================="
-echo " Building YourBrowser Desktop Portable AppImage v${VERSION} "
+echo " Building YourBrowser Standalone Portable AppImage v${VERSION} "
+echo " Compression: ${COMPRESSION} | CPU Cores: ${CORES}"
 echo "=========================================================="
 
 if [ ! -f "$RUNTIME" ]; then
@@ -19,26 +39,79 @@ if [ ! -f "$RUNTIME" ]; then
     exit 1
 fi
 
-# Clean and prepare directory structure
+# Locate PyInstaller
+PYINSTALLER_CMD=()
+if command -v pyinstaller &>/dev/null; then
+    PYINSTALLER_CMD=("$(command -v pyinstaller)")
+elif [ -x "$HOME/.local/bin/pyinstaller" ]; then
+    PYINSTALLER_CMD=("$HOME/.local/bin/pyinstaller")
+elif python3 -m PyInstaller --version &>/dev/null; then
+    PYINSTALLER_CMD=(python3 -m PyInstaller)
+else
+    echo "[-] PyInstaller is required to build a standalone AppImage."
+    echo "    Please run: pip3 install pyinstaller"
+    exit 1
+fi
+
+echo "[+] Using PyInstaller: ${PYINSTALLER_CMD[*]}"
+
+# Clean previous AppDir structure
 rm -rf "$ROOT_DIR/build/appimage"
+mkdir -p "$ROOT_DIR/build/appimage"
 mkdir -p "$APP_DIR/usr/bin"
-mkdir -p "$APP_DIR/usr/share/yourbrowser"
+mkdir -p "$APP_DIR/usr/lib/yourbrowser"
+mkdir -p "$APP_DIR/usr/share/applications"
 mkdir -p "$APP_DIR/usr/share/icons/hicolor/scalable/apps"
 mkdir -p "$DIST_DIR"
 
-# Copy source code and assets into AppDir
-cp -r "$ROOT_DIR/src" "$APP_DIR/usr/share/yourbrowser/"
-cp -r "$ROOT_DIR/assets" "$APP_DIR/usr/share/yourbrowser/"
-if [ -d "$ROOT_DIR/config" ]; then
-    cp -r "$ROOT_DIR/config" "$APP_DIR/usr/share/yourbrowser/"
+PYINSTALLER_OUTPUT="$ROOT_DIR/build/pyinstaller_dist/yourbrowser"
+
+# Check if we need to build PyInstaller bundle
+NEED_BUNDLE=false
+if [ "$FORCE_CLEAN" = true ] || [ ! -f "$PYINSTALLER_OUTPUT/yourbrowser" ]; then
+    NEED_BUNDLE=true
+else
+    # Check if any python file in src/ is newer than the bundled executable
+    if [ -n "$(find "$ROOT_DIR/src" -type f -newer "$PYINSTALLER_OUTPUT/yourbrowser" 2>/dev/null | head -n 1)" ]; then
+        echo "[*] Source code changes detected in src/. Re-bundling..."
+        NEED_BUNDLE=true
+    fi
 fi
 
-# Copy icon and desktop entry to root of AppDir and hicolor icons
-mkdir -p "$APP_DIR/usr/share/applications"
+if [ "$NEED_BUNDLE" = true ]; then
+    echo "[+] Bundling Python interpreter, PyQt6, and Chromium WebEngine core..."
+    CLEAN_FLAG=()
+    if [ "$FORCE_CLEAN" = true ]; then
+        CLEAN_FLAG=("--clean")
+    fi
+
+    "${PYINSTALLER_CMD[@]}" \
+        --name yourbrowser \
+        --onedir \
+        --noconfirm \
+        "${CLEAN_FLAG[@]}" \
+        --specpath "$ROOT_DIR/build" \
+        --paths "$ROOT_DIR" \
+        --add-data "$ROOT_DIR/assets:assets" \
+        --add-data "$ROOT_DIR/config:config" \
+        --add-data "$ROOT_DIR/src:src" \
+        --collect-all PyQt6 \
+        --collect-submodules src \
+        "$ROOT_DIR/src/app.py" \
+        --distpath "$ROOT_DIR/build/pyinstaller_dist" \
+        --workpath "$ROOT_DIR/build/pyinstaller_build"
+else
+    echo "[+] Reusing compiled bundle at $PYINSTALLER_OUTPUT (pass --clean to force full recompile)"
+fi
+
+# Copy PyInstaller bundle into AppDir usr/lib/yourbrowser
+echo "[+] Assembling AppDir structure..."
+cp -a "$PYINSTALLER_OUTPUT/"* "$APP_DIR/usr/lib/yourbrowser/"
+
+# 2. Copy Icons
 cp "$ROOT_DIR/assets/icons/yourbrowser.svg" "$APP_DIR/yourbrowser.svg"
 cp "$ROOT_DIR/assets/icons/yourbrowser.svg" "$APP_DIR/usr/share/icons/hicolor/scalable/apps/yourbrowser.svg"
 
-# Multi-resolution PNG icons
 for res in 16x16 32x32 48x48 64x64 128x128 256x256 512x512; do
     if [ -f "$ROOT_DIR/assets/icons/$res/yourbrowser.png" ]; then
         mkdir -p "$APP_DIR/usr/share/icons/hicolor/$res/apps"
@@ -49,7 +122,7 @@ if [ -f "$ROOT_DIR/assets/icons/256x256/yourbrowser.png" ]; then
     cp "$ROOT_DIR/assets/icons/256x256/yourbrowser.png" "$APP_DIR/yourbrowser.png"
 fi
 
-# Create portable desktop entry
+# 3. Create portable desktop entry
 cat << 'EODESK' > "$APP_DIR/yourbrowser.desktop"
 [Desktop Entry]
 Version=1.0
@@ -75,7 +148,7 @@ Exec=yourbrowser --incognito
 EODESK
 cp "$APP_DIR/yourbrowser.desktop" "$APP_DIR/usr/share/applications/yourbrowser.desktop"
 
-# Create AppRun entrypoint
+# 4. Create AppRun entrypoint
 cat << 'EORUN' > "$APP_DIR/AppRun"
 #!/bin/bash
 set -e
@@ -114,28 +187,32 @@ else
 fi
 
 export QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME:-gtk3}"
-export PYTHONPATH="$HERE/usr/share/yourbrowser:${PYTHONPATH:-}"
 
-exec python3 "$HERE/usr/share/yourbrowser/src/app.py" "$@"
+# Execute self-contained YourBrowser binary
+exec "$HERE/usr/lib/yourbrowser/yourbrowser" "$@"
 EORUN
 chmod +x "$APP_DIR/AppRun"
 
-# Create symlink launcher in usr/bin
+# 5. Create symlink launcher in usr/bin
 cat << 'EOLAUNCH' > "$APP_DIR/usr/bin/yourbrowser"
 #!/bin/bash
 exec "$(dirname "$(readlink -f "${0}")")/../../AppRun" "$@"
 EOLAUNCH
 chmod +x "$APP_DIR/usr/bin/yourbrowser"
 
-# Generate SquashFS filesystem
+# 6. Generate SquashFS filesystem
 SQUASHFS_IMG="$ROOT_DIR/build/appimage/root.squashfs"
-echo "[+] Creating SquashFS image..."
-mksquashfs "$APP_DIR" "$SQUASHFS_IMG" -root-owned -noappend -comp xz
+echo "[+] Creating compressed SquashFS image (${COMPRESSION}) using ${CORES} processors..."
+mksquashfs "$APP_DIR" "$SQUASHFS_IMG" \
+    -root-owned \
+    -noappend \
+    -comp "$COMPRESSION" \
+    -processors "$CORES"
 
-# Concatenate runtime and squashfs to create the AppImage
-echo "[+] Generating final AppImage: $OUTPUT_APPIMAGE..."
+# 7. Concatenate runtime and squashfs to create the AppImage
+echo "[+] Generating final Standalone AppImage: $OUTPUT_APPIMAGE..."
 cat "$RUNTIME" "$SQUASHFS_IMG" > "$OUTPUT_APPIMAGE"
 chmod +x "$OUTPUT_APPIMAGE"
 
-echo "[✓] AppImage built successfully!"
+echo "[✓] Standalone AppImage built successfully!"
 ls -lh "$OUTPUT_APPIMAGE"

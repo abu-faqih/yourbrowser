@@ -195,8 +195,13 @@ python3 tests/test_stream_native.py
 Aplikasi mendukung mode portabel murni. Seluruh profil, bookmark, riwayat, sesi tab, dan cache akan disimpan secara otomatis di folder `yourbrowser_data/` yang berada tepat di samping berkas `.AppImage` (atau di `<nama>.AppImage.home/`). Anda dapat memindahkan file AppImage beserta foldernya ke flashdisk atau komputer lain tanpa kehilangan data sedikitpun!
 
 ```bash
-# Membangun file Portable AppImage ke folder dist/
+# Membangun file Standalone Portable AppImage ke folder dist/ (default: kompresi gzip cepat multi-core)
 ./scripts/build_appimage.sh
+
+# Opsi parameter tambahan:
+# --clean : Memaksa compile ulang bundel PyInstaller secara penuh dari awal
+# --xz    : Menggunakan kompresi XZ maksimal (ukuran berkas lebih hemat, waktu kompresi lebih lama)
+./scripts/build_appimage.sh --clean
 
 # Menjalankan Portable AppImage
 ./dist/YourBrowser-1.0.0-x86_64.AppImage
