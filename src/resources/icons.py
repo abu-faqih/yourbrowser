@@ -224,3 +224,50 @@ def create_svg_icon(name: str, color: str = "#94A3B8", size: int = 18) -> QIcon:
     painter.end()
     
     return QIcon(pixmap)
+
+
+def get_app_icon() -> QIcon:
+    """Return high-resolution multi-size QIcon for the YourBrowser application."""
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    icon = QIcon()
+    
+    # 1. Add all pre-rendered PNG sizes if available
+    for sz in [16, 24, 32, 48, 64, 128, 256, 512]:
+        png_path = os.path.join(project_root, "assets", "icons", f"{sz}x{sz}", "yourbrowser.png")
+        if os.path.exists(png_path):
+            icon.addFile(png_path, QSize(sz, sz))
+            
+    # 2. Add root PNG
+    root_png = os.path.join(project_root, "assets", "icons", "yourbrowser.png")
+    if os.path.exists(root_png):
+        icon.addFile(root_png)
+
+    # 3. Add root SVG
+    svg_path = os.path.join(project_root, "assets", "icons", "yourbrowser.svg")
+    if os.path.exists(svg_path):
+        icon.addFile(svg_path)
+
+    return icon
+
+
+def get_app_pixmap(size: int = 40) -> QPixmap:
+    """Return crisp QPixmap of the application logo for in-app headers and branding."""
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    svg_path = os.path.join(project_root, "assets", "icons", "yourbrowser.svg")
+    
+    if os.path.exists(svg_path):
+        renderer = QSvgRenderer(svg_path)
+        pixmap = QPixmap(size, size)
+        pixmap.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        return pixmap
+        
+    png_path = os.path.join(project_root, "assets", "icons", "yourbrowser.png")
+    if os.path.exists(png_path):
+        return QPixmap(png_path).scaled(size, size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+
+    return QPixmap()

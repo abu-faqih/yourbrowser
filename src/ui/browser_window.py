@@ -119,6 +119,9 @@ class YourBrowserWindow(QMainWindow):
         self.resize(1360, 850)
         self.setStyleSheet(BRAVE_THEME_QSS)
 
+        from src.resources.icons import get_app_icon
+        self.setWindowIcon(get_app_icon())
+
         # Core Managers with Profile Isolation
         if self.profile_id and not self.is_incognito:
             profile_dir = self.profile_manager.get_profile_dir(self.profile_id)
@@ -273,6 +276,18 @@ class YourBrowserWindow(QMainWindow):
         nav_layout = QHBoxLayout(nav_toolbar)
         nav_layout.setContentsMargins(12, 6, 12, 6)
         nav_layout.setSpacing(8)
+
+        # Brand Logo in Toolbar
+        from src.resources.icons import get_app_pixmap
+        self.brand_logo_lbl = QLabel(nav_toolbar)
+        self.brand_logo_lbl.setObjectName("brand_logo_lbl")
+        self.brand_logo_lbl.setToolTip("YourBrowser - Modern Privacy Browser")
+        logo_pix = get_app_pixmap(24)
+        if not logo_pix.isNull():
+            self.brand_logo_lbl.setPixmap(logo_pix)
+            self.brand_logo_lbl.setFixedSize(24, 24)
+            self.brand_logo_lbl.setStyleSheet("margin-right: 4px;")
+            nav_layout.addWidget(self.brand_logo_lbl)
 
         # Navigation Action Buttons
         self.back_btn = QPushButton(nav_toolbar)

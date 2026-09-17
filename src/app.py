@@ -36,9 +36,10 @@ def main():
     app = QApplication(sys.argv)
 
     # Set Application Icon
-    icon_path = os.path.join(PROJECT_ROOT, "assets", "icons", "yourbrowser.svg")
-    if os.path.exists(icon_path):
-        app.setWindowIcon(QIcon(icon_path))
+    from src.resources.icons import get_app_icon
+    app_icon = get_app_icon()
+    if not app_icon.isNull():
+        app.setWindowIcon(app_icon)
 
     # Parse initial URL from arguments if present
     initial_url = None

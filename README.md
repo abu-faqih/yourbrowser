@@ -54,10 +54,12 @@ yourbrowser/
 ├── desktop/
 │   └── yourbrowser.desktop             # Integrasi shortcut sistem desktop Linux
 ├── assets/
-│   └── icons/                          # Ikon vektor resolusi tinggi YourBrowser
-│       └── yourbrowser.svg
+│   └── icons/                          # Ikon vektor resolusi tinggi & PNG multi-resolusi YourBrowser
+│       ├── yourbrowser.svg
+│       ├── yourbrowser.png
+│       └── [16x16 ... 512x512]/
 └── scripts/
-    └── install_desktop.sh              # Skrip instalasi shortcut desktop ke sistem
+    └── install_desktop.sh              # Skrip instalasi shortcut desktop & cache ikon ke sistem
 ```
 
 ---

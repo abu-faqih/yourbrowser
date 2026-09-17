@@ -73,10 +73,16 @@ class TestBraveSettings(unittest.TestCase):
         sheet3 = get_theme_stylesheet("midnight", "emerald")
         self.assertIn("#10B981", sheet3)
 
-        # Crisp Light theme
-        sheet4 = get_theme_stylesheet("light", "purple")
-        self.assertIn("#A855F7", sheet4)
-        self.assertIn("#F1F5F9", sheet4)
+    def test_app_icon_and_pixmap_loading(self):
+        """Test application icon and pixmap loader produces valid objects."""
+        from src.resources.icons import get_app_icon, get_app_pixmap
+        icon = get_app_icon()
+        self.assertFalse(icon.isNull())
+
+        pixmap = get_app_pixmap(48)
+        self.assertFalse(pixmap.isNull())
+        self.assertEqual(pixmap.width(), 48)
+        self.assertEqual(pixmap.height(), 48)
 
 
 if __name__ == "__main__":

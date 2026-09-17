@@ -301,6 +301,9 @@ class DashboardWindow(QMainWindow):
         self.setWindowTitle("YourBrowser - Profiles & Dashboard")
         self.resize(980, 700)
         self.setStyleSheet(BRAVE_THEME_QSS)
+        
+        from src.resources.icons import get_app_icon, get_app_pixmap
+        self.setWindowIcon(get_app_icon())
 
         self.setup_ui()
         self.setup_shortcuts()
@@ -320,11 +323,20 @@ class DashboardWindow(QMainWindow):
         header_layout.setSpacing(16)
 
         # Logo & App Title
+        from src.resources.icons import get_app_pixmap
         logo_box = QHBoxLayout()
         logo_box.setSpacing(12)
-        shield_icon = QLabel("🛡️", header_widget)
-        shield_icon.setStyleSheet("font-size: 30px;")
-        logo_box.addWidget(shield_icon)
+        
+        logo_pixmap = get_app_pixmap(44)
+        if not logo_pixmap.isNull():
+            logo_img_lbl = QLabel(header_widget)
+            logo_img_lbl.setPixmap(logo_pixmap)
+            logo_img_lbl.setFixedSize(44, 44)
+            logo_box.addWidget(logo_img_lbl)
+        else:
+            shield_icon = QLabel("🛡️", header_widget)
+            shield_icon.setStyleSheet("font-size: 30px;")
+            logo_box.addWidget(shield_icon)
 
         title_col = QVBoxLayout()
         title_col.setSpacing(2)
