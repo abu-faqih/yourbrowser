@@ -82,6 +82,23 @@ def get_default_config_dir() -> str:
             os.makedirs(tmp_fallback, exist_ok=True)
             return tmp_fallback
 
+def is_system_dark_mode() -> bool:
+    """Detect whether Linux desktop or OS environment prefers dark mode."""
+    import subprocess
+    for cmd in [
+        ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],
+        ["gsettings", "get", "org.cinnamon.desktop.interface", "gtk-theme"],
+        ["gsettings", "get", "org.gnome.desktop.interface", "gtk-theme"],
+    ]:
+        try:
+            out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode().strip().lower()
+            if "dark" in out or "prefer-dark" in out:
+                return True
+        except Exception:
+            pass
+    return False
+
+
 DEFAULT_CONFIG_DIR = get_default_config_dir()
 
 DEFAULT_SETTINGS = {
@@ -106,6 +123,7 @@ DEFAULT_SETTINGS = {
     "show_bookmarks_bar": False,
     "show_shields_lion": True,
     "use_system_title_bar": False,
+    "web_dark_mode": "auto",
 
     # Brave Shields & Privacy
     "shields_enabled_by_default": True,

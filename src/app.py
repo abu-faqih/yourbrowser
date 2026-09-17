@@ -15,9 +15,28 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Ensure Chromium sandbox flag is safely handled
-if "QTWEBENGINE_CHROMIUM_FLAGS" not in os.environ:
-    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
+# Determine dark mode status for Chromium web rendering
+from src.core.browser_data import is_system_dark_mode, SettingsManager
+
+try:
+    _settings = SettingsManager()
+    _web_dark_pref = _settings.get("web_dark_mode", "auto")
+    _should_dark = False
+    if _web_dark_pref == "dark":
+        _should_dark = True
+    elif _web_dark_pref == "light":
+        _should_dark = False
+    else:
+        _theme_mode = _settings.get("theme_mode", "brave_dark")
+        _should_dark = (_theme_mode != "light") or is_system_dark_mode()
+
+    _flags = os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox")
+    if _should_dark and "--force-dark-mode" not in _flags:
+        _flags = f"{_flags} --force-dark-mode"
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = _flags
+except Exception:
+    if "QTWEBENGINE_CHROMIUM_FLAGS" not in os.environ:
+        os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
 
 # Ensure GTK platform theme is integrated if running in a GTK/GNOME/Cinnamon environment
 if sys.platform.startswith("linux") and "QT_QPA_PLATFORMTHEME" not in os.environ:

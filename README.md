@@ -145,7 +145,13 @@ yourbrowser/
 - Mendukung *Native Window Dragging & Snapping* serta *Edge Resizing* via API Qt 6 (`startSystemMove()` dan `startSystemResize()`).
 - Opsi switchable: Pengguna yang tetap menginginkan title bar sistem bawaan OS dapat mengaktifkannya melalui menu **Settings (`Ctrl+,`) > Appearance > "Use native system title bar and window borders"**.
 
-### 16. Pintasan Keyboard Standar (Keyboard Shortcuts)
+### 16. Sinkronisasi Otomatis Mode Gelap ke Situs Web (prefers-color-scheme: dark)
+- Engine Chromium mendeteksi tema gelap OS desktop Linux (`Mint-Y-Dark`, `prefer-dark`, tema GTK gelap) dan tema browser secara otomatis.
+- Mengaktifkan flag `--force-dark-mode` dan menyuntikkan meta `color-scheme: dark` agar situs web modern (Google, YouTube, GitHub, Twitter, Wikipedia, dll.) langsung merender tema gelap mereka via media query CSS `@media (prefers-color-scheme: dark)`.
+- Mengeliminasi *white-flashbang* saat navigasi atau membuka tab baru dengan menyetel warna latar belakang canvas Chromium default ke Obsidian Dark (`#0E121A`).
+- Pengguna dapat mengonfigurasi preferensi tampilan situs melalui menu **Settings (`Ctrl+,`) > Appearance > "Website Dark Theme"** (`Follow System (Auto)`, `Always Dark`, `Always Light`).
+
+### 17. Pintasan Keyboard Standar (Keyboard Shortcuts)
 | Shortcut | Konteks | Aksi |
 | :--- | :--- | :--- |
 | `Ctrl+H` | Dashboard | Sembunyikan / Tampilkan profil rahasia (*Toggle Hidden Profiles*) |

@@ -229,6 +229,38 @@ class YourBrowserWindow(QMainWindow, FramelessResizeMixin):
         # Apply installed extensions to profile
         self.extension_manager.apply_to_profile(self.profile)
 
+        # Inject website color-scheme meta script matching dark mode preference
+        from src.core.browser_data import is_system_dark_mode
+        web_dark_pref = self.settings_manager.get("web_dark_mode", "auto")
+        should_dark = True
+        if web_dark_pref == "light":
+            should_dark = False
+        elif web_dark_pref == "auto":
+            should_dark = (self.settings_manager.get("theme_mode", "brave_dark") != "light") or is_system_dark_mode()
+
+        scheme_value = "dark light" if should_dark else "light dark"
+        dark_script = QWebEngineScript()
+        dark_script.setName("color_scheme_meta")
+        dark_script.setSourceCode(f"""
+        (function() {{
+            try {{
+                let meta = document.querySelector('meta[name="color-scheme"]');
+                if (!meta) {{
+                    meta = document.createElement('meta');
+                    meta.name = 'color-scheme';
+                    meta.content = '{scheme_value}';
+                    if (document.head) {{
+                        document.head.appendChild(meta);
+                    }}
+                }}
+            }} catch(e) {{}}
+        }})();
+        """)
+        dark_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
+        dark_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        dark_script.setRunsOnSubFrames(True)
+        self.profile.scripts().insert(dark_script)
+
     def setup_ui(self):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
@@ -552,7 +584,11 @@ class YourBrowserWindow(QMainWindow, FramelessResizeMixin):
         settings.setAttribute(QWebEngineSettings.WebAttribute.AllowRunningInsecureContent, False)
 
         page = CustomWebEnginePage(self.profile, self, view)
-        page.setBackgroundColor(Qt.GlobalColor.white)
+        from PyQt6.QtGui import QColor
+        from src.core.browser_data import is_system_dark_mode
+        web_dark_pref = self.settings_manager.get("web_dark_mode", "auto")
+        is_dark = (web_dark_pref == "dark") or (web_dark_pref == "auto" and (self.settings_manager.get("theme_mode", "brave_dark") != "light" or is_system_dark_mode()))
+        page.setBackgroundColor(QColor("#0E121A") if is_dark else QColor("#FFFFFF"))
         view.setPage(page)
 
         container = TabContainer(tab_id, view, self.security_manager, self.stacked_widget)

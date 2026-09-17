@@ -272,6 +272,14 @@ class SettingsDialog(QDialog):
         self.accent_combo.setCurrentIndex(a_map.get(a_color, 0))
         form_theme.addRow("Accent Color:", self.accent_combo)
 
+        # Website Dark Theme (prefers-color-scheme)
+        self.web_dark_combo = QComboBox(grp_theme)
+        self.web_dark_combo.addItems(["Follow System / Browser Theme (Auto)", "Always Dark Mode", "Always Light Mode"])
+        w_mode = self.settings_manager.get("web_dark_mode", "auto")
+        w_map = {"auto": 0, "dark": 1, "light": 2}
+        self.web_dark_combo.setCurrentIndex(w_map.get(w_mode, 0))
+        form_theme.addRow("Website Dark Theme:", self.web_dark_combo)
+
         layout.addWidget(grp_theme)
 
         # Toolbar & Controls Group
@@ -500,6 +508,8 @@ class SettingsDialog(QDialog):
         self.settings_manager.set("show_bookmarks_bar", self.cb_bmarks_bar.isChecked())
         self.settings_manager.set("show_shields_lion", self.cb_shields_lion.isChecked())
         self.settings_manager.set("use_system_title_bar", self.cb_system_titlebar.isChecked())
+        w_modes = ["auto", "dark", "light"]
+        self.settings_manager.set("web_dark_mode", w_modes[self.web_dark_combo.currentIndex()])
         self.settings_manager.set("homepage", self.homepage_input.text().strip() or "https://search.brave.com")
         self.settings_manager.set("new_tab_url", self.newtab_input.text().strip() or "https://search.brave.com")
 
