@@ -85,16 +85,38 @@ def get_default_config_dir() -> str:
 DEFAULT_CONFIG_DIR = get_default_config_dir()
 
 DEFAULT_SETTINGS = {
+    # Search Engine
     "search_engine": "brave",
     "search_engines": {
         "brave": "https://search.brave.com/search?q={query}",
         "duckduckgo": "https://duckduckgo.com/?q={query}",
         "google": "https://www.google.com/search?q={query}",
-        "bing": "https://www.bing.com/search?q={query}"
+        "bing": "https://www.bing.com/search?q={query}",
+        "ecosia": "https://www.ecosia.org/search?q={query}",
+        "qwant": "https://www.qwant.com/?q={query}"
     },
+    # Navigation & URLs
     "homepage": "https://search.brave.com",
+    "new_tab_url": "https://search.brave.com",
+
+    # Appearance & Customization
+    "theme_mode": "brave_dark",
+    "accent_color": "orange",
+    "show_home_button": True,
     "show_bookmarks_bar": False,
-    "shields_enabled_by_default": True
+    "show_shields_lion": True,
+
+    # Brave Shields & Privacy
+    "shields_enabled_by_default": True,
+    "shields_ad_mode": "aggressive",
+    "block_fingerprinting": True,
+    "block_social_trackers": True,
+    "force_https": True,
+    "block_popups": True,
+    "cookie_policy": "block_third_party",
+
+    # Extensions
+    "enabled_extensions": ["shield-booster"]
 }
 
 

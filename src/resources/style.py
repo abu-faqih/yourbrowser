@@ -467,3 +467,135 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
     width: 0px;
 }}
 """
+
+
+def get_theme_stylesheet(theme_mode: str = "brave_dark", accent_color: str = "orange") -> str:
+    """Generate dynamic stylesheet based on user customization settings."""
+    # Resolve accent colors
+    accent_map = {
+        "orange": "#FF5500",
+        "cyan": "#06B6D4",
+        "emerald": "#10B981",
+        "purple": "#A855F7"
+    }
+    accent_hex = accent_map.get(accent_color, "#FF5500")
+
+    if theme_mode == "light":
+        return f"""
+QMainWindow {{
+    background-color: #F1F5F9;
+    color: #0F172A;
+}}
+QMainWindow, QDialog, QMenu, QTabBar, QLabel, QLineEdit, QPushButton, QListWidget, QGroupBox, QComboBox, QProgressBar {{
+    font-family: {Typography.FONT_SANS};
+    font-size: {Typography.SIZE_BODY};
+    color: #0F172A;
+}}
+QWebEngineView {{
+    background-color: #FFFFFF;
+}}
+#top_tab_strip {{
+    background-color: #E2E8F0;
+    border-bottom: 1px solid #CBD5E1;
+    padding-top: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+}}
+QTabBar::tab {{
+    background-color: #F8FAFC;
+    color: #475569;
+    padding: 8px 18px;
+    margin-right: 4px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    min-width: 140px;
+    max-width: 230px;
+    border: 1px solid #CBD5E1;
+    border-bottom: none;
+    font-weight: 500;
+}}
+QTabBar::tab:selected {{
+    background-color: #FFFFFF;
+    color: #0F172A;
+    font-weight: 700;
+    border-top: 2px solid {accent_hex};
+}}
+#nav_toolbar {{
+    background-color: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 6px 12px;
+}}
+#omnibox_capsule {{
+    background-color: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    border-radius: 19px;
+    min-height: 38px;
+    max-height: 38px;
+    padding-left: 12px;
+    padding-right: 12px;
+}}
+#omnibox_capsule:focus-within {{
+    border: 1.5px solid {accent_hex};
+    background-color: #FFFFFF;
+}}
+QLineEdit#omnibox {{
+    background: transparent;
+    border: none;
+    color: #0F172A;
+    font-size: 13.5px;
+}}
+QPushButton.nav-btn, QPushButton#new_tab_btn {{
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 17px;
+    min-width: 34px;
+    max-width: 34px;
+    min-height: 34px;
+    max-height: 34px;
+}}
+QPushButton.nav-btn:hover, QPushButton#new_tab_btn:hover {{
+    background-color: #E2E8F0;
+    border: 1px solid #CBD5E1;
+}}
+#bookmarks_bar {{
+    background-color: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    min-height: 30px;
+}}
+QPushButton.bookmark-bar-item {{
+    background-color: transparent;
+    color: #334155;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 3px 10px;
+    font-size: 12px;
+}}
+QPushButton.bookmark-bar-item:hover {{
+    background-color: #E2E8F0;
+    border-color: #CBD5E1;
+}}
+"""
+    elif theme_mode == "cyber_dark":
+        bg_canvas = "#050B14"
+        bg_card = "#0D1829"
+        border_subtle = "#15243B"
+    elif theme_mode == "midnight":
+        bg_canvas = "#000000"
+        bg_card = "#0A0A0A"
+        border_subtle = "#1A1A1A"
+    else:  # brave_dark
+        bg_canvas = Colors.BG_CANVAS
+        bg_card = Colors.SURFACE_1
+        border_subtle = Colors.BORDER_SUBTLE
+
+    # Replace accent line in default theme with configured accent
+    sheet = BRAVE_THEME_QSS
+    if accent_hex != "#FF5500":
+        sheet = sheet.replace(Colors.ACCENT_ORANGE, accent_hex)
+    if bg_canvas != Colors.BG_CANVAS:
+        sheet = sheet.replace(Colors.BG_CANVAS, bg_canvas)
+        sheet = sheet.replace(Colors.SURFACE_1, bg_card)
+        sheet = sheet.replace(Colors.BORDER_SUBTLE, border_subtle)
+
+    return sheet
+

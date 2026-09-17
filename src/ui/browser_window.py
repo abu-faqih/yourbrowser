@@ -28,6 +28,7 @@ from src.core.security import SecurityManager
 from src.core.browser_data import BookmarkManager, HistoryManager, SettingsManager
 from src.core.download_manager import DownloadManager
 from src.core.profile_manager import ProfileManager
+from src.core.extension_manager import ExtensionManager
 from src.ui.shields_panel import ShieldsPopup
 from src.ui.lock_modal import SetPasswordDialog, LockedTabOverlay
 from src.ui.bookmarks_bar import BookmarksBar
@@ -36,7 +37,8 @@ from src.ui.history_dialog import HistoryDialog
 from src.ui.bookmarks_dialog import BookmarksDialog
 from src.ui.downloads_dialog import DownloadsDialog
 from src.ui.settings_dialog import SettingsDialog
-from src.resources.style import BRAVE_THEME_QSS
+from src.ui.extensions_dialog import ExtensionsDialog
+from src.resources.style import BRAVE_THEME_QSS, get_theme_stylesheet
 from src.resources.icons import create_svg_icon
 
 
@@ -123,10 +125,12 @@ class YourBrowserWindow(QMainWindow):
             self.bookmark_manager = BookmarkManager(base_dir=profile_dir)
             self.history_manager = HistoryManager(base_dir=profile_dir)
             self.settings_manager = SettingsManager(base_dir=profile_dir)
+            self.extension_manager = ExtensionManager(base_dir=profile_dir, settings_manager=self.settings_manager)
         else:
             self.bookmark_manager = BookmarkManager()
             self.history_manager = HistoryManager()
             self.settings_manager = SettingsManager()
+            self.extension_manager = ExtensionManager(settings_manager=self.settings_manager)
 
         self.security_manager = SecurityManager()
         self.download_manager = DownloadManager()
@@ -139,6 +143,7 @@ class YourBrowserWindow(QMainWindow):
         self.init_web_profile()
         self.setup_ui()
         self.setup_shortcuts()
+        self.apply_customization()
 
         # Restore saved tabs or add initial tab
         self.restore_or_init_tabs(initial_url)
@@ -179,6 +184,12 @@ class YourBrowserWindow(QMainWindow):
         )
 
         self.interceptor = ShieldUrlInterceptor(self)
+        self.interceptor.configure_shields(
+            enabled=self.settings_manager.get("shields_enabled_by_default", True),
+            ad_mode=self.settings_manager.get("shields_ad_mode", "aggressive"),
+            block_social=self.settings_manager.get("block_social_trackers", True),
+            force_https=self.settings_manager.get("force_https", True)
+        )
         self.interceptor.ad_blocked.connect(self.on_ad_blocked)
         self.profile.setUrlRequestInterceptor(self.interceptor)
 
@@ -193,6 +204,20 @@ class YourBrowserWindow(QMainWindow):
         script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
         script.setRunsOnSubFrames(True)
         self.profile.scripts().insert(script)
+
+        # Inject Shields anti-fingerprinting script
+        if self.settings_manager.get("block_fingerprinting", True):
+            from src.core.adblock_engine import ANTI_FINGERPRINT_INJECTION
+            fp_script = QWebEngineScript()
+            fp_script.setName("anti_fingerprint_script")
+            fp_script.setSourceCode(ANTI_FINGERPRINT_INJECTION)
+            fp_script.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
+            fp_script.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+            fp_script.setRunsOnSubFrames(True)
+            self.profile.scripts().insert(fp_script)
+
+        # Apply installed extensions to profile
+        self.extension_manager.apply_to_profile(self.profile)
 
     def setup_ui(self):
         central_widget = QWidget(self)
@@ -352,6 +377,16 @@ class YourBrowserWindow(QMainWindow):
         self.dashboard_btn.clicked.connect(self.go_to_dashboard)
         nav_layout.addWidget(self.dashboard_btn)
 
+        # Extensions Button
+        self.extensions_btn = QPushButton(nav_toolbar)
+        self.extensions_btn.setObjectName("extensions_btn")
+        self.extensions_btn.setProperty("class", "nav-btn")
+        self.extensions_btn.setIcon(create_svg_icon("extension", "#94A3B8", 17))
+        self.extensions_btn.setIconSize(QSize(17, 17))
+        self.extensions_btn.setToolTip("Extensions Manager (Ctrl+Shift+E)")
+        self.extensions_btn.clicked.connect(self.show_extensions_dialog)
+        nav_layout.addWidget(self.extensions_btn)
+
         # Tab Lock Button (hidden from toolbar, functionality preserved via context menu)
         self.lock_btn = QPushButton("🔒 Lock Tab", nav_toolbar)
         self.lock_btn.setObjectName("lock_btn")
@@ -442,6 +477,8 @@ class YourBrowserWindow(QMainWindow):
         QShortcut(QKeySequence("Ctrl+D"), self, self.toggle_current_bookmark)
         QShortcut(QKeySequence("Ctrl+Shift+B"), self, self.toggle_bookmarks_bar)
         QShortcut(QKeySequence("Ctrl+Shift+O"), self, self.show_bookmarks_dialog)
+        QShortcut(QKeySequence("Ctrl+Shift+E"), self, self.show_extensions_dialog)
+        QShortcut(QKeySequence("Ctrl+,"), self, self.show_settings_dialog)
         QShortcut(QKeySequence("Ctrl+F"), self, self.open_find_in_page)
         QShortcut(QKeySequence("Ctrl+P"), self, self.print_page)
         QShortcut(QKeySequence("F11"), self, self.toggle_fullscreen)
@@ -916,8 +953,11 @@ class YourBrowserWindow(QMainWindow):
 
         menu.addSeparator()
 
-        # Settings & Clear
-        settings_act = menu.addAction(create_svg_icon("settings", "#CBD5E1", 15), "Settings")
+        # Extensions & Settings
+        ext_act = menu.addAction(create_svg_icon("extension", "#CBD5E1", 15), "Extensions\tCtrl+Shift+E")
+        ext_act.triggered.connect(self.show_extensions_dialog)
+
+        settings_act = menu.addAction(create_svg_icon("settings", "#CBD5E1", 15), "Settings\tCtrl+,")
         settings_act.triggered.connect(self.show_settings_dialog)
 
         about_act = menu.addAction("About YourBrowser")
@@ -927,9 +967,38 @@ class YourBrowserWindow(QMainWindow):
         menu.exec(btn_pos)
 
     def show_settings_dialog(self):
-        dlg = SettingsDialog(self.settings_manager, self)
-        dlg.settings_updated.connect(lambda: self.bookmarks_bar.setVisible(self.settings_manager.get("show_bookmarks_bar", True)))
+        dlg = SettingsDialog(self.settings_manager, self.extension_manager, self)
+        dlg.settings_updated.connect(self.apply_customization)
         dlg.exec()
+
+    def show_extensions_dialog(self):
+        dlg = ExtensionsDialog(self.extension_manager, self)
+        dlg.extensions_changed.connect(lambda: self.extension_manager.apply_to_profile(self.profile))
+        dlg.exec()
+
+    def apply_customization(self):
+        """Applies theme, colors, toolbar buttons, and shield preferences live."""
+        theme_mode = self.settings_manager.get("theme_mode", "brave_dark")
+        accent_color = self.settings_manager.get("accent_color", "orange")
+        self.setStyleSheet(get_theme_stylesheet(theme_mode, accent_color))
+
+        if hasattr(self, "home_btn"):
+            self.home_btn.setVisible(self.settings_manager.get("show_home_button", True))
+        if hasattr(self, "bookmarks_bar"):
+            self.bookmarks_bar.setVisible(self.settings_manager.get("show_bookmarks_bar", False))
+        if hasattr(self, "shield_btn"):
+            self.shield_btn.setVisible(self.settings_manager.get("show_shields_lion", True))
+
+        if hasattr(self, "interceptor"):
+            self.interceptor.configure_shields(
+                enabled=self.settings_manager.get("shields_enabled_by_default", True),
+                ad_mode=self.settings_manager.get("shields_ad_mode", "aggressive"),
+                block_social=self.settings_manager.get("block_social_trackers", True),
+                force_https=self.settings_manager.get("force_https", True)
+            )
+
+        if hasattr(self, "extension_manager") and hasattr(self, "profile"):
+            self.extension_manager.apply_to_profile(self.profile)
 
     def show_about_dialog(self):
         QMessageBox.about(

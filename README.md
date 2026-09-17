@@ -115,11 +115,26 @@ yourbrowser/
 - Dilengkapi gradasi linear dinamis (*Brave Flame Gradient*, *Cyber Cyan Gradient*, *Emerald Glow*, dan *Deep Obsidian Surface Depth*).
 - Dokumentasi lengkap tersedia pada [`DESIGN_SYSTEM.md`](file:///mnt/storage/aplikasi/yourbrowser/DESIGN_SYSTEM.md).
 
-### 12. Pintasan Keyboard Standar (Keyboard Shortcuts)
+### 12. Brave Settings Hub & Kustomisasi Real-Time (`Ctrl+,`)
+- Antarmuka pengaturan komprehensif dua panel bergaya Brave Browser dengan sidebar navigasi kategori:
+  1. **🛡️ Shields & Privacy**: Pengaturan agresivitas pemblokir iklan & pelacak (*Aggressive / Standard / Off*), proteksi anti-fingerprinting (Canvas & AudioContext noise), pemblokir pelacak media sosial (Facebook, X, TikTok), opsi upgrade ke HTTPS (*Force HTTPS*), anti-popup, dan kebijakan cookie terisolasi.
+  2. **🎨 Appearance**: Kustomisasi tema seketika (*Brave Obsidian Dark*, *Cyber Cyan Dark*, *Midnight OLED*, dan *Crisp Light*) serta pemilihan warna aksen (*Brave Flame Orange*, *Cyber Cyan*, *Emerald Glow*, dan *Electric Purple*), toggle tombol Home, tombol Shields Lion, dan Bookmarks Bar.
+  3. **🔍 Search Engines**: Pemilihan mesin pencari bawaan (*Brave Search*, *DuckDuckGo*, *Google*, *Bing*, *Ecosia*, *Qwant*).
+  4. **🧩 Extensions**: Panel kelola ekstensi terpasang dan instalasi unpacked extension.
+  5. **🗑️ Clear Data**: Pembersihan selektif riwayat, cache, cookies, dan tab sesi.
+
+### 13. Dukungan Ekstensi Chromium (Manifest V2 & V3) (`Ctrl+Shift+E`)
+- Engine loader ekstensi native (`src/core/extension_manager.py`) yang mem-parse `manifest.json` dan menginjeksi `content_scripts` ke profil Chromium secara terisolasi (`MainWorld` / `ApplicationWorld`).
+- Dilengkapi ekstensi bawaan **`YourBrowser Shield Booster`** (`extensions/shield-booster`) untuk netralisasi popup dan click-hijacking.
+- Mendukung pemasangan ekstensi baru secara langsung dari direktori (*Load Unpacked Extension...*) dan toggle aktivasi per ekstensi.
+
+### 14. Pintasan Keyboard Standar (Keyboard Shortcuts)
 | Shortcut | Konteks | Aksi |
 | :--- | :--- | :--- |
 | `Ctrl+H` | Dashboard | Sembunyikan / Tampilkan profil rahasia (*Toggle Hidden Profiles*) |
 | `Ctrl+H` | Browser | Buka Pengelola Riwayat Penjelajahan (*Browsing History*) |
+| `Ctrl+,` | Browser | Buka Panel Pengaturan Brave (*Settings Hub*) |
+| `Ctrl+Shift+E` | Browser | Buka Manajer Ekstensi (*Extensions Manager*) |
 | `Ctrl+T` / `Ctrl+W` | Browser | Buka tab baru / Tutup tab aktif |
 | `Ctrl+Shift+T` | Browser | Buka kembali tab yang baru ditutup (*Reopen closed tab*) |
 | `Ctrl+N` / `Ctrl+Shift+N` | Browser | Jendela baru / Jendela privat (Incognito) baru |

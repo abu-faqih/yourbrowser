@@ -17,6 +17,32 @@ AD_BLOCK_RULES = {
     "creative", "clickadu", "adx", "adriver", "smartadserver"
 }
 
+SOCIAL_TRACKER_RULES = {
+    "connect.facebook.net", "facebook.com/tr", "platform.twitter.com",
+    "syndication.twitter.com", "platform.linkedin.com", "licdn.com",
+    "analytics.tiktok.com", "pinterest.com/ct.js"
+}
+
+ANTI_FINGERPRINT_INJECTION = """
+(() => {
+    'use strict';
+    // Brave-like Fingerprinting Protection: Canvas & Audio Context spoofing
+    try {
+        const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+        HTMLCanvasElement.prototype.toDataURL = function() {
+            const ctx = this.getContext('2d');
+            if (ctx) {
+                // Introduce subtle noise to canvas hash without ruining visible rendering
+                const img = ctx.getImageData(0, 0, Math.min(this.width, 2), Math.min(this.height, 2));
+                img.data[0] = (img.data[0] + 1) % 255;
+                ctx.putImageData(img, 0, 0);
+            }
+            return origToDataURL.apply(this, arguments);
+        };
+    } catch(e) {}
+})();
+"""
+
 ANTI_POPUP_INJECTION = """
 (() => {
     'use strict';
@@ -45,7 +71,6 @@ ANTI_POPUP_INJECTION = """
 
     // 3. Auto-bypass stream click-traps & fake overlays (e.g. "Klik Di Mana Saja untuk Memulai Film")
     function bypassStreamTraps() {
-        // Target annoying LK21 overlay banner
         const overlays = document.querySelectorAll('div, section, p, span, a');
         overlays.forEach(el => {
             const text = el.textContent || '';
@@ -98,27 +123,51 @@ class ShieldUrlInterceptor(QWebEngineUrlRequestInterceptor):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.shields_enabled = True
+        self.ad_mode = "aggressive"  # "aggressive", "standard", "off"
+        self.block_social = True
+        self.force_https = True
         self.blocked_count = 0
         self.listeners = []
+
+    def configure_shields(self, enabled: bool = True, ad_mode: str = "aggressive", block_social: bool = True, force_https: bool = True):
+        """Update shield blocking settings dynamically."""
+        self.shields_enabled = enabled
+        self.ad_mode = ad_mode
+        self.block_social = block_social
+        self.force_https = force_https
 
     def add_listener(self, callback):
         self.listeners.append(callback)
 
     def interceptRequest(self, info):
-        url = info.requestUrl().toString().lower()
-        host = info.requestUrl().host().lower()
-
-        if not self.shields_enabled:
+        if not self.shields_enabled or self.ad_mode == "off":
             return
 
+        qurl = info.requestUrl()
+        url = qurl.toString().lower()
+        host = qurl.host().lower()
+
+        # 1. Social Tracker Filter
+        if self.block_social:
+            is_social = any(rule in host or rule in url for rule in SOCIAL_TRACKER_RULES)
+            if is_social:
+                info.block(True)
+                self.blocked_count += 1
+                self.ad_blocked.emit(self.blocked_count, url)
+                self._notify_listeners(url)
+                return
+
+        # 2. Ads & Trackers Filter
         is_ad = any(rule in host or rule in url for rule in AD_BLOCK_RULES)
-        
         if is_ad:
             info.block(True)
             self.blocked_count += 1
             self.ad_blocked.emit(self.blocked_count, url)
-            for cb in self.listeners:
-                try:
-                    cb(self.blocked_count, url)
-                except Exception:
-                    pass
+            self._notify_listeners(url)
+
+    def _notify_listeners(self, url: str):
+        for cb in self.listeners:
+            try:
+                cb(self.blocked_count, url)
+            except Exception:
+                pass
