@@ -121,10 +121,12 @@ class BookmarksDialog(QDialog):
 
     def _populate_list(self, bookmarks):
         self.list_widget.clear()
+        star_icon = create_svg_icon("star", "#F59E0B", 16)
         for bm in bookmarks:
             title = bm.get("title") or bm.get("url") or "Untitled Bookmark"
             url = bm.get("url", "")
-            item = QListWidgetItem(f"★ {title}\n   {url}")
+            item = QListWidgetItem(f"{title}\n{url}")
+            item.setIcon(star_icon)
             item.setData(Qt.ItemDataRole.UserRole, bm)
             self.list_widget.addItem(item)
 

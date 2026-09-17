@@ -167,7 +167,8 @@ class ExtensionsDialog(QDialog):
 
         header.addStretch()
 
-        load_btn = QPushButton("📁 Load Unpacked...", self)
+        load_btn = QPushButton(" Load Unpacked...", self)
+        load_btn.setIcon(create_svg_icon("folder", "#FFFFFF", 14))
         load_btn.setStyleSheet(pill_button_primary(height=34, font_size="12px"))
         load_btn.clicked.connect(self._on_load_unpacked)
         header.addWidget(load_btn)

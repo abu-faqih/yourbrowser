@@ -47,7 +47,7 @@ class SetPasswordDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(14)
 
-        title = QLabel(f"🔒 Lock Tab Protection", self)
+        title = QLabel(f"Lock Tab Protection", self)
         title.setProperty("class", "header-title")
         layout.addWidget(title)
 
@@ -169,8 +169,9 @@ class LockedTabOverlay(QWidget):
         c_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         c_layout.setSpacing(14)
 
-        icon_lbl = QLabel("🔐", card)
-        icon_lbl.setProperty("class", "icon-shield")
+        from src.resources.icons import create_svg_pixmap
+        icon_lbl = QLabel(card)
+        icon_lbl.setPixmap(create_svg_pixmap("lock", "#38BDF8", 48))
         icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         c_layout.addWidget(icon_lbl)
 

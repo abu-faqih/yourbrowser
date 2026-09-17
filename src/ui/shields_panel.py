@@ -108,7 +108,7 @@ class ShieldsPopup(QDialog):
         header_text_box = QVBoxLayout()
         header_text_box.setSpacing(2)
 
-        brand_title = QLabel("🛡️ Brave Shields Pro", card)
+        brand_title = QLabel("Brave Shields Pro", card)
         brand_title.setProperty("class", "brand-title")
         header_text_box.addWidget(brand_title)
 

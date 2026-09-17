@@ -15,6 +15,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 
 from src.core.profile_manager import ProfileManager, DEFAULT_AVATAR_COLORS
 from src.resources.style import BRAVE_THEME_QSS
+from src.resources.icons import create_svg_icon, create_svg_pixmap
 from src.resources.design_system import (
     Colors, Gradients, Radii, Typography,
     pill_button_primary, pill_button_secondary, pill_badge, rounded_input
@@ -44,7 +45,7 @@ class ProfilePasswordDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(14)
 
-        title_lbl = QLabel(f"🔒 Unlock '{profile_name}'", self)
+        title_lbl = QLabel(f"Unlock '{profile_name}'", self)
         title_lbl.setStyleSheet(f"font-size: {Typography.SIZE_SUBTITLE}; font-weight: 700; color: #FFFFFF;")
         layout.addWidget(title_lbl)
 
@@ -61,7 +62,7 @@ class ProfilePasswordDialog(QDialog):
         layout.addWidget(self.pwd_input)
 
         self.error_lbl = QLabel("", self)
-        self.error_lbl.setStyleSheet(f"color: {Colors.STATUS_DANGER}; font-size: {Typography.SIZE_SMALL}; font-weight: 600;")
+        self.error_lbl.setStyleSheet(f"color: {Colors.STATUS_DANGER}; font-size: {Typography.SIZE_SMALL};")
         self.error_lbl.hide()
         layout.addWidget(self.error_lbl)
 
@@ -71,31 +72,35 @@ class ProfilePasswordDialog(QDialog):
         btn_row.setSpacing(10)
 
         cancel_btn = QPushButton("Cancel", self)
-        cancel_btn.setStyleSheet(pill_button_secondary(height=34))
+        cancel_btn.setStyleSheet(pill_button_secondary(height=36, font_size="13px"))
         cancel_btn.clicked.connect(self.reject)
         btn_row.addWidget(cancel_btn)
 
-        unlock_btn = QPushButton("Unlock & Open", self)
-        unlock_btn.setStyleSheet(pill_button_primary(height=34))
+        unlock_btn = QPushButton("Unlock", self)
+        unlock_btn.setStyleSheet(pill_button_primary(height=36, font_size="13px"))
         unlock_btn.clicked.connect(self.verify_and_accept)
         btn_row.addWidget(unlock_btn)
 
         layout.addLayout(btn_row)
-        self.pwd_input.setFocus()
 
     def verify_and_accept(self):
-        candidate = self.pwd_input.text()
-        if self.profile_manager.verify_password(self.profile_id, candidate):
+        pwd = self.pwd_input.text()
+        if not pwd:
+            self.error_lbl.setText("Password cannot be empty.")
+            self.error_lbl.show()
+            return
+
+        if self.profile_manager.verify_password(self.profile_id, pwd):
             self.accept()
         else:
             self.error_lbl.setText("Incorrect password. Please try again.")
             self.error_lbl.show()
-            self.pwd_input.selectAll()
+            self.pwd_input.clear()
             self.pwd_input.setFocus()
 
 
 class CreateProfileDialog(QDialog):
-    """Dialog for creating a new isolated browser profile."""
+    """Dialog to create a new profile with optional password & stealth setting."""
 
     def __init__(self, profile_manager: ProfileManager, parent=None):
         super().__init__(parent)
@@ -117,7 +122,7 @@ class CreateProfileDialog(QDialog):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
-        title_lbl = QLabel("👤 Add New Browser Profile", self)
+        title_lbl = QLabel("Add New Browser Profile", self)
         title_lbl.setStyleSheet(f"font-size: {Typography.SIZE_SUBTITLE}; font-weight: 700; color: #FFFFFF;")
         layout.addWidget(title_lbl)
 
@@ -245,13 +250,31 @@ class ProfileCard(QFrame):
         badges_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         if profile.get("has_password", False):
-            lock_badge = QLabel("🔒 Locked", self)
-            lock_badge.setStyleSheet(pill_badge(Colors.STATUS_DANGER_BG, "#FCA5A5", "10px") + f"border: 1px solid {Colors.STATUS_DANGER};")
+            lock_badge = QFrame(self)
+            lock_badge.setStyleSheet(f"background-color: {Colors.STATUS_DANGER_BG}; border: 1px solid {Colors.STATUS_DANGER}; border-radius: 9999px; padding: 2px 8px;")
+            lb_layout = QHBoxLayout(lock_badge)
+            lb_layout.setContentsMargins(4, 2, 6, 2)
+            lb_layout.setSpacing(4)
+            lb_ico = QLabel(lock_badge)
+            lb_ico.setPixmap(create_svg_pixmap("lock", "#FCA5A5", 11))
+            lb_txt = QLabel("Locked", lock_badge)
+            lb_txt.setStyleSheet("color: #FCA5A5; font-size: 10px; font-weight: 700;")
+            lb_layout.addWidget(lb_ico)
+            lb_layout.addWidget(lb_txt)
             badges_layout.addWidget(lock_badge)
 
         if profile.get("is_hidden", False):
-            hidden_badge = QLabel("👁️ Hidden", self)
-            hidden_badge.setStyleSheet(pill_badge(Colors.SURFACE_3, Colors.ACCENT_CYAN, "10px") + f"border: 1px solid {Colors.ACCENT_CYAN};")
+            hidden_badge = QFrame(self)
+            hidden_badge.setStyleSheet(f"background-color: {Colors.SURFACE_3}; border: 1px solid {Colors.ACCENT_CYAN}; border-radius: 9999px; padding: 2px 8px;")
+            hb_layout = QHBoxLayout(hidden_badge)
+            hb_layout.setContentsMargins(4, 2, 6, 2)
+            hb_layout.setSpacing(4)
+            hb_ico = QLabel(hidden_badge)
+            hb_ico.setPixmap(create_svg_pixmap("eye", Colors.ACCENT_CYAN, 11))
+            hb_txt = QLabel("Hidden", hidden_badge)
+            hb_txt.setStyleSheet(f"color: {Colors.ACCENT_CYAN}; font-size: 10px; font-weight: 700;")
+            hb_layout.addWidget(hb_ico)
+            hb_layout.addWidget(hb_txt)
             badges_layout.addWidget(hidden_badge)
 
         layout.addLayout(badges_layout)
@@ -334,8 +357,8 @@ class DashboardWindow(QMainWindow):
             logo_img_lbl.setFixedSize(44, 44)
             logo_box.addWidget(logo_img_lbl)
         else:
-            shield_icon = QLabel("🛡️", header_widget)
-            shield_icon.setStyleSheet("font-size: 30px;")
+            shield_icon = QLabel(header_widget)
+            shield_icon.setPixmap(create_svg_pixmap("shield", Colors.ACCENT_ORANGE, 36))
             logo_box.addWidget(shield_icon)
 
         title_col = QVBoxLayout()
@@ -360,14 +383,16 @@ class DashboardWindow(QMainWindow):
         header_layout.addWidget(self.hidden_status_lbl)
 
         # Toggle Hidden Profiles Button (Interactive Pill Button)
-        self.toggle_hidden_btn = QPushButton("👁️ Show Hidden", header_widget)
+        self.toggle_hidden_btn = QPushButton(" Show Hidden", header_widget)
+        self.toggle_hidden_btn.setIcon(create_svg_icon("eye", "#94A3B8", 16))
         self.toggle_hidden_btn.setToolTip("Toggle visibility of hidden profiles (Ctrl+H)")
         self.toggle_hidden_btn.setStyleSheet(pill_button_secondary(height=38, font_size="13px"))
         self.toggle_hidden_btn.clicked.connect(self.toggle_hidden_profiles)
         header_layout.addWidget(self.toggle_hidden_btn)
 
         # Add Profile Button (Pill Primary Flame)
-        self.add_profile_btn = QPushButton("+ New Profile", header_widget)
+        self.add_profile_btn = QPushButton(" New Profile", header_widget)
+        self.add_profile_btn.setIcon(create_svg_icon("plus", "#FFFFFF", 16))
         self.add_profile_btn.setStyleSheet(pill_button_primary(height=38, font_size="13px"))
         self.add_profile_btn.clicked.connect(self.open_create_profile_dialog)
         header_layout.addWidget(self.add_profile_btn)
@@ -395,7 +420,7 @@ class DashboardWindow(QMainWindow):
         self.main_layout.addWidget(self.scroll_area, stretch=1)
 
         # Footer shortcut hint
-        footer_lbl = QLabel("💡 Tip: Press Ctrl+H or click 'Show Hidden' to toggle visibility of hidden profiles", self)
+        footer_lbl = QLabel("Tip: Press Ctrl+H or click 'Show Hidden' to toggle visibility of hidden profiles", self)
         footer_lbl.setStyleSheet(f"color: {Colors.TEXT_MUTED}; font-size: 11.5px;")
         footer_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(footer_lbl)
@@ -422,7 +447,8 @@ class DashboardWindow(QMainWindow):
         self.show_hidden = not self.show_hidden
         if self.show_hidden:
             if hasattr(self, "toggle_hidden_btn"):
-                self.toggle_hidden_btn.setText("👁️‍🗨️ Hide Hidden")
+                self.toggle_hidden_btn.setText(" Hide Hidden")
+                self.toggle_hidden_btn.setIcon(create_svg_icon("eye_off", Colors.ACCENT_CYAN, 16))
                 self.toggle_hidden_btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: #1E293B;
@@ -438,11 +464,12 @@ class DashboardWindow(QMainWindow):
                         color: #FFFFFF;
                     }}
                 """)
-            self.hidden_status_lbl.setText("👁️ Hidden Profiles: Visible")
+            self.hidden_status_lbl.setText("Hidden Profiles: Visible")
             self.hidden_status_lbl.show()
         else:
             if hasattr(self, "toggle_hidden_btn"):
-                self.toggle_hidden_btn.setText("👁️ Show Hidden")
+                self.toggle_hidden_btn.setText(" Show Hidden")
+                self.toggle_hidden_btn.setIcon(create_svg_icon("eye", "#94A3B8", 16))
                 self.toggle_hidden_btn.setStyleSheet(pill_button_secondary(height=38, font_size="13px"))
             self.hidden_status_lbl.hide()
         self.refresh_profiles()
@@ -478,8 +505,8 @@ class DashboardWindow(QMainWindow):
         layout.setSpacing(16)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        icon_lbl = QLabel("🚀", box)
-        icon_lbl.setStyleSheet("font-size: 52px;")
+        icon_lbl = QLabel(box)
+        icon_lbl.setPixmap(create_svg_pixmap("user", Colors.ACCENT_ORANGE, 48))
         layout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
 
         title = QLabel("Welcome to YourBrowser!", box)
@@ -495,7 +522,8 @@ class DashboardWindow(QMainWindow):
         desc.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: {Typography.SIZE_BODY}; line-height: 1.5;")
         layout.addWidget(desc, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        create_btn = QPushButton("Create Your First Profile", box)
+        create_btn = QPushButton(" Create Your First Profile", box)
+        create_btn.setIcon(create_svg_icon("plus", "#FFFFFF", 16))
         create_btn.setStyleSheet(pill_button_primary(height=42, font_size="14px"))
         create_btn.clicked.connect(self.open_create_profile_dialog)
         layout.addWidget(create_btn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -510,8 +538,8 @@ class DashboardWindow(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(12)
 
-        icon_lbl = QLabel("🕵️", box)
-        icon_lbl.setStyleSheet("font-size: 40px;")
+        icon_lbl = QLabel(box)
+        icon_lbl.setPixmap(create_svg_pixmap("eye", Colors.ACCENT_CYAN, 40))
         layout.addWidget(icon_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
 
         lbl = QLabel("All your profiles are currently hidden.", box)
@@ -522,7 +550,8 @@ class DashboardWindow(QMainWindow):
         sub_lbl.setStyleSheet(f"color: {Colors.TEXT_SECONDARY}; font-size: 13px;")
         layout.addWidget(sub_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        reveal_btn = QPushButton("👁️ Show Hidden Profiles Now (Ctrl+H)", box)
+        reveal_btn = QPushButton(" Show Hidden Profiles Now (Ctrl+H)", box)
+        reveal_btn.setIcon(create_svg_icon("eye", "#FFFFFF", 16))
         reveal_btn.setStyleSheet(pill_button_primary(height=40, font_size="13px"))
         reveal_btn.clicked.connect(self.toggle_hidden_profiles)
         layout.addWidget(reveal_btn, alignment=Qt.AlignmentFlag.AlignCenter)

@@ -114,7 +114,7 @@ class YourBrowserWindow(QMainWindow):
         self.profile_manager = profile_manager or ProfileManager()
 
         profile_name = self.profile_data.get("name")
-        title_prefix = "🕶️ Private Window - " if self.is_incognito else (f"[{profile_name}] " if profile_name else "")
+        title_prefix = "Private Window - " if self.is_incognito else (f"[{profile_name}] " if profile_name else "")
         self.setWindowTitle(f"{title_prefix}YourBrowser - Modern Privacy Browser")
         self.resize(1360, 850)
         self.setStyleSheet(BRAVE_THEME_QSS)
@@ -240,11 +240,20 @@ class YourBrowserWindow(QMainWindow):
 
         # Incognito indicator in tab strip if private
         if self.is_incognito:
-            incog_badge = QLabel("🕶️ Private", tab_strip_widget)
+            incog_badge = QFrame(tab_strip_widget)
             incog_badge.setStyleSheet(
                 "background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #8B5CF6, stop:1 #6366F1);"
-                "color: #FFFFFF; font-weight: 700; font-size: 11px; padding: 4px 12px; border-radius: 9999px; margin-right: 6px;"
+                "border-radius: 9999px; margin-right: 6px;"
             )
+            ib_layout = QHBoxLayout(incog_badge)
+            ib_layout.setContentsMargins(10, 3, 10, 3)
+            ib_layout.setSpacing(5)
+            ib_ico = QLabel(incog_badge)
+            ib_ico.setPixmap(create_svg_pixmap("incognito", "#FFFFFF", 12))
+            ib_txt = QLabel("Private", incog_badge)
+            ib_txt.setStyleSheet("color: #FFFFFF; font-weight: 700; font-size: 11px;")
+            ib_layout.addWidget(ib_ico)
+            ib_layout.addWidget(ib_txt)
             tab_strip_layout.addWidget(incog_badge)
 
         self.tab_bar = QTabBar(tab_strip_widget)
@@ -380,7 +389,8 @@ class YourBrowserWindow(QMainWindow):
         nav_layout.addWidget(self.extensions_btn)
 
         # Tab Lock Button (hidden from toolbar, functionality preserved via context menu)
-        self.lock_btn = QPushButton("🔒 Lock Tab", nav_toolbar)
+        self.lock_btn = QPushButton(" Lock Tab", nav_toolbar)
+        self.lock_btn.setIcon(create_svg_icon("lock", "#FFFFFF", 14))
         self.lock_btn.setObjectName("lock_btn")
         self.lock_btn.setToolTip("Protect this tab with password or PIN")
         self.lock_btn.clicked.connect(self.on_lock_current_tab)
@@ -616,7 +626,8 @@ class YourBrowserWindow(QMainWindow):
             self.find_bar.set_active_view(container.web_view)
 
             if container.is_locked:
-                self.lock_btn.setText("🔓 Unlock Tab")
+                self.lock_btn.setText(" Unlock Tab")
+                self.lock_btn.setIcon(create_svg_icon("unlock", "#FFFFFF", 14))
                 self.lock_btn.setStyleSheet("""
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #EF4444, stop:1 #DC2626);
                     color: #FFFFFF;
@@ -625,11 +636,12 @@ class YourBrowserWindow(QMainWindow):
                     font-weight: 700;
                     padding: 6px 16px;
                 """)
-                self.omnibox.setText("🔒 [Encrypted Tab Session]")
+                self.omnibox.setText("[Encrypted Tab Session]")
                 self.ssl_icon_lbl.setPixmap(create_svg_pixmap("lock", "#EF4444", 14))
                 self.update_bookmark_icon("")
             else:
-                self.lock_btn.setText("🔒 Lock Tab")
+                self.lock_btn.setText(" Lock Tab")
+                self.lock_btn.setIcon(create_svg_icon("lock", "#FFFFFF", 14))
                 self.lock_btn.setStyleSheet("")
                 qurl = container.web_view.url()
                 url_str = qurl.toString() if not qurl.isEmpty() else ""
@@ -650,11 +662,10 @@ class YourBrowserWindow(QMainWindow):
     def on_title_changed(self, title, container):
         index = self.stacked_widget.indexOf(container)
         if index != -1:
-            lock_prefix = "🔒 " if container.is_locked else ""
             display_title = (title[:18] + "...") if len(title) > 18 else (title or "New Tab")
             icon = create_svg_icon("lock" if container.is_locked else "tab_globe", "#38BDF8" if container.is_locked else "#94A3B8", 14)
             self.tab_bar.setTabIcon(index, icon)
-            self.tab_bar.setTabText(index, lock_prefix + display_title)
+            self.tab_bar.setTabText(index, display_title)
 
     def on_load_progress(self, progress):
         if progress < 100:
@@ -1044,10 +1055,10 @@ class YourBrowserWindow(QMainWindow):
 
         # 3. Lock / Unlock Tab
         if container.is_locked:
-            lock_action = menu.addAction(create_svg_icon("unlock", "#38BDF8", 16), "🔓 Unlock Tab...")
+            lock_action = menu.addAction(create_svg_icon("unlock", "#38BDF8", 16), "Unlock Tab...")
             lock_action.triggered.connect(lambda: self.unlock_tab_by_index(index))
         else:
-            lock_action = menu.addAction(create_svg_icon("lock", "#38BDF8", 16), "🔒 Lock Tab with Password...")
+            lock_action = menu.addAction(create_svg_icon("lock", "#38BDF8", 16), "Lock Tab with Password...")
             lock_action.triggered.connect(lambda: self.lock_tab_by_index(index))
 
         menu.addSeparator()

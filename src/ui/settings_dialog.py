@@ -177,7 +177,7 @@ class SettingsDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         bottom_bar.addWidget(cancel_btn)
 
-        save_btn = QPushButton("Save & Apply", self)
+        save_btn = QPushButton("Save && Apply", self)
         save_btn.setStyleSheet(pill_button_primary(height=34, font_size="12px"))
         save_btn.clicked.connect(self._save_settings)
         bottom_bar.addWidget(save_btn)
@@ -350,7 +350,8 @@ class SettingsDialog(QDialog):
         top_row.addWidget(desc)
         top_row.addStretch()
 
-        load_btn = QPushButton("📁 Load Unpacked...", page)
+        load_btn = QPushButton(" Load Unpacked...", page)
+        load_btn.setIcon(create_svg_icon("folder", "#FFFFFF", 14))
         load_btn.setStyleSheet(pill_button_primary(height=30, font_size="11.5px"))
         load_btn.clicked.connect(self._on_load_unpacked_clicked)
         top_row.addWidget(load_btn)

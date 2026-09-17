@@ -69,7 +69,7 @@ yourbrowser/
 ### 1. Dashboard Profil & Alur Onboarding Perdana
 - Saat pertama kali membuka peramban, aplikasi menampilkan layar **Dashboard** bergaya Brave Obsidian Dark.
 - Jika belum ada profil yang dibuat, sistem otomatis menyajikan alur onboarding interaktif untuk membuat profil pertama Anda.
-- Setiap kartu profil menampilkan inisial avatar berwarna, nama akun, badge status proteksi (🔒 Locked), dan badge profil tersembunyi (👁️ Hidden).
+- Setiap kartu profil menampilkan inisial avatar berwarna, nama akun, badge status proteksi (Locked), dan badge profil tersembunyi (Hidden) dengan ikon vektor SVG tajam.
 
 ### 2. Isolasi Penuh Antar Profil (Session & Data Isolation)
 - Setiap profil memiliki direktori terpisah di `~/.config/yourbrowser/profiles/<profile_id>/`.
@@ -85,12 +85,12 @@ yourbrowser/
 - Saat profil dibuka kembali dari Dashboard di masa mendatang, seluruh tab yang tersimpan akan langsung dimuat ulang ke posisi tab terakhir.
 
 ### 5. Tombol Dashboard di Toolbar
-- Tombol `🔒 Lock Tab` pada toolbar navigasi digantikan oleh tombol **🏠 Dashboard**.
+- Tombol `Lock Tab` pada toolbar navigasi diselaraskan menjadi tombol **Dashboard** dengan ikon vektor resolusi tinggi.
 - Menekan tombol Dashboard akan menyimpan sesi tab profil saat ini dan mengembalikan pengguna ke tampilan Dashboard manajemen profil.
 - Proteksi kunci tab individual tetap dapat diakses dengan mudah via klik kanan pada tab (Tab Context Menu).
 
 ### 6. Brave Shields & Pemblokir Iklan Agresif
-- Tombol **🛡️ Shields** menampilkan jumlah iklan/pelacak yang berhasil diblokir secara langsung.
+- Tombol **Shields** menampilkan jumlah iklan/pelacak yang berhasil diblokir secara langsung.
 - Mengklik tombol Shields membuka panel dropdown interaktif untuk mengaktifkan (*Shields UP*) atau menonaktifkan (*Shields DOWN*) proteksi.
 - Secara otomatis menetralkan jebakan `window.open` dan iklan klik (*popunder*) pada situs-situs film streaming.
 
@@ -109,21 +109,22 @@ yourbrowser/
 
 ### 10. Mode Privat / Incognito Window
 - Buka jendela privat terpisah (`Ctrl+Shift+N`) dengan profil *off-the-record* memori terisolasi tanpa jejak riwayat atau cookies disk.
-- Dilengkapi badge visual khusus `🕶️ Private Window`.
+- Dilengkapi badge visual khusus `Private Window` dengan ikon vektor kacamata penyamaran.
 
 ### 11. Unified Design System & Fluid Visual Tokens
 - Arsitektur desain konsisten, modern, dan profesional berbasis token (`Colors`, `Gradients`, `Radii`, `Typography`) di `src/resources/design_system.py`.
+- Seluruh ikon antarmuka menggunakan **100% SVG Vector Graphics** resolusi tinggi (`src/resources/icons.py`) sehingga tajam di semua DPI layar Linux dan bebas dari distorsi font emoji Unicode.
 - Mengusung bentuk **pill / capsule** (`border-radius: 9999px` / `14-18px`) pada Omnibox, tombol aksi utama, dan badge status.
 - Dilengkapi gradasi linear dinamis (*Brave Flame Gradient*, *Cyber Cyan Gradient*, *Emerald Glow*, dan *Deep Obsidian Surface Depth*).
 - Dokumentasi lengkap tersedia pada [`DESIGN_SYSTEM.md`](file:///mnt/storage/aplikasi/yourbrowser/DESIGN_SYSTEM.md).
 
 ### 12. Brave Settings Hub & Kustomisasi Real-Time (`Ctrl+,`)
-- Antarmuka pengaturan komprehensif dua panel bergaya Brave Browser dengan sidebar navigasi kategori:
-  1. **🛡️ Shields & Privacy**: Pengaturan agresivitas pemblokir iklan & pelacak (*Aggressive / Standard / Off*), proteksi anti-fingerprinting (Canvas & AudioContext noise), pemblokir pelacak media sosial (Facebook, X, TikTok), opsi upgrade ke HTTPS (*Force HTTPS*), anti-popup, dan kebijakan cookie terisolasi.
-  2. **🎨 Appearance**: Kustomisasi tema seketika (*Brave Obsidian Dark*, *Cyber Cyan Dark*, *Midnight OLED*, dan *Crisp Light*) serta pemilihan warna aksen (*Brave Flame Orange*, *Cyber Cyan*, *Emerald Glow*, dan *Electric Purple*), toggle tombol Home, tombol Shields Lion, dan Bookmarks Bar.
-  3. **🔍 Search Engines**: Pemilihan mesin pencari bawaan (*Brave Search*, *DuckDuckGo*, *Google*, *Bing*, *Ecosia*, *Qwant*).
-  4. **🧩 Extensions**: Panel kelola ekstensi terpasang dan instalasi unpacked extension.
-  5. **🗑️ Clear Data**: Pembersihan selektif riwayat, cache, cookies, dan tab sesi.
+- Antarmuka pengaturan komprehensif dua panel bergaya Brave Browser dengan sidebar navigasi kategori berikon vektor SVG:
+  1. **Shields & Privacy**: Pengaturan agresivitas pemblokir iklan & pelacak (*Aggressive / Standard / Off*), proteksi anti-fingerprinting (Canvas & AudioContext noise), pemblokir pelacak media sosial (Facebook, X, TikTok), opsi upgrade ke HTTPS (*Force HTTPS*), anti-popup, dan kebijakan cookie terisolasi.
+  2. **Appearance**: Kustomisasi tema seketika (*Brave Obsidian Dark*, *Cyber Cyan Dark*, *Midnight OLED*, dan *Crisp Light*) serta pemilihan warna aksen (*Brave Flame Orange*, *Cyber Cyan*, *Emerald Glow*, dan *Electric Purple*), toggle tombol Home, tombol Shields, dan Bookmarks Bar.
+  3. **Search Engines**: Pemilihan mesin pencari bawaan (*Brave Search*, *DuckDuckGo*, *Google*, *Bing*, *Ecosia*, *Qwant*).
+  4. **Extensions**: Panel kelola ekstensi terpasang dan instalasi unpacked extension.
+  5. **Clear Data**: Pembersihan selektif riwayat, cache, cookies, dan tab sesi.
 
 ### 13. Dukungan Ekstensi Chromium (Manifest V2 & V3) (`Ctrl+Shift+E`)
 - Engine loader ekstensi native (`src/core/extension_manager.py`) yang mem-parse `manifest.json` dan menginjeksi `content_scripts` ke profil Chromium secara terisolasi (`MainWorld` / `ApplicationWorld`).
