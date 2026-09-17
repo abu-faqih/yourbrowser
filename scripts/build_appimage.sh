@@ -34,9 +34,46 @@ if [ -d "$ROOT_DIR/config" ]; then
 fi
 
 # Copy icon and desktop entry to root of AppDir and hicolor icons
+mkdir -p "$APP_DIR/usr/share/applications"
 cp "$ROOT_DIR/assets/icons/yourbrowser.svg" "$APP_DIR/yourbrowser.svg"
 cp "$ROOT_DIR/assets/icons/yourbrowser.svg" "$APP_DIR/usr/share/icons/hicolor/scalable/apps/yourbrowser.svg"
-cp "$ROOT_DIR/desktop/yourbrowser.desktop" "$APP_DIR/yourbrowser.desktop"
+
+# Multi-resolution PNG icons
+for res in 16x16 32x32 48x48 64x64 128x128 256x256 512x512; do
+    if [ -f "$ROOT_DIR/assets/icons/$res/yourbrowser.png" ]; then
+        mkdir -p "$APP_DIR/usr/share/icons/hicolor/$res/apps"
+        cp "$ROOT_DIR/assets/icons/$res/yourbrowser.png" "$APP_DIR/usr/share/icons/hicolor/$res/apps/yourbrowser.png"
+    fi
+done
+if [ -f "$ROOT_DIR/assets/icons/256x256/yourbrowser.png" ]; then
+    cp "$ROOT_DIR/assets/icons/256x256/yourbrowser.png" "$APP_DIR/yourbrowser.png"
+fi
+
+# Create portable desktop entry
+cat << 'EODESK' > "$APP_DIR/yourbrowser.desktop"
+[Desktop Entry]
+Version=1.0
+Name=YourBrowser
+GenericName=Web Browser
+Comment=Access the Internet with Ultimate Privacy and Zero Ads
+Exec=yourbrowser %U
+StartupNotify=true
+Terminal=false
+Icon=yourbrowser
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=application/pdf;application/rdf+xml;application/rss+xml;application/xhtml+xml;application/xhtml_xml;application/xml;image/gif;image/jpeg;image/png;image/webp;text/html;text/xml;x-scheme-handler/http;x-scheme-handler/https;
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=yourbrowser
+
+[Desktop Action new-private-window]
+Name=New Incognito Window
+Exec=yourbrowser --incognito
+EODESK
+cp "$APP_DIR/yourbrowser.desktop" "$APP_DIR/usr/share/applications/yourbrowser.desktop"
 
 # Create AppRun entrypoint
 cat << 'EORUN' > "$APP_DIR/AppRun"
@@ -76,6 +113,7 @@ else
     export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox ${QTWEBENGINE_CHROMIUM_FLAGS}"
 fi
 
+export QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME:-gtk3}"
 export PYTHONPATH="$HERE/usr/share/yourbrowser:${PYTHONPATH:-}"
 
 exec python3 "$HERE/usr/share/yourbrowser/src/app.py" "$@"
