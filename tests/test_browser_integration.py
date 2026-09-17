@@ -44,9 +44,12 @@ class TestBrowserIntegration(unittest.TestCase):
 
         # Lock tab
         container.lock_tab()
+        self.window.on_title_changed(container.web_view.title(), container)
+        self.window.on_tab_changed(0)
         self.assertTrue(container.is_locked)
         self.assertTrue(container.web_view.isHidden())
         self.assertFalse(container.overlay.isHidden())
+        self.assertIn("🔒", self.window.tab_bar.tabText(0))
 
         # Test unlock with correct password
         container.overlay.input_pwd.setText("test_pass_123")
@@ -55,6 +58,8 @@ class TestBrowserIntegration(unittest.TestCase):
         self.assertFalse(container.is_locked)
         self.assertFalse(container.web_view.isHidden())
         self.assertTrue(container.overlay.isHidden())
+        self.assertNotIn("🔒", self.window.tab_bar.tabText(0))
+        self.assertNotIn("Encrypted Tab Session", self.window.omnibox.text())
 
     def test_shields_interceptor(self):
         self.assertTrue(self.window.interceptor.shields_enabled)

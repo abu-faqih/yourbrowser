@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QMessageBox, QProgressBar, QLabel, QFrame, QMenu,
     QSizePolicy
 )
-from PyQt6.QtCore import QUrl, Qt, QTimer, QSize
+from PyQt6.QtCore import QUrl, Qt, QTimer, QSize, pyqtSignal
 from PyQt6.QtGui import QIcon, QKeySequence, QShortcut
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebEngineCore import (
@@ -58,6 +58,8 @@ class CustomWebEnginePage(QWebEnginePage):
 class TabContainer(QWidget):
     """Container holding QWebEngineView and its LockedTabOverlay."""
 
+    tab_unlocked = pyqtSignal()
+
     def __init__(self, tab_id, web_view, security_manager, parent=None):
         super().__init__(parent)
         self.tab_id = tab_id
@@ -88,6 +90,7 @@ class TabContainer(QWidget):
         self.is_locked = False
         self.overlay.hide()
         self.web_view.show()
+        self.tab_unlocked.emit()
 
 
 class YourBrowserWindow(QMainWindow):
@@ -502,6 +505,7 @@ class YourBrowserWindow(QMainWindow):
 
         container = TabContainer(tab_id, view, self.security_manager, self.stacked_widget)
         container.requested_url = url
+        container.tab_unlocked.connect(lambda c=container: self.on_tab_unlocked(c))
 
         view.urlChanged.connect(lambda qurl: self.on_url_changed(qurl, container))
         view.titleChanged.connect(lambda title: self.on_title_changed(title, container))
@@ -522,6 +526,14 @@ class YourBrowserWindow(QMainWindow):
 
         return view
 
+    def on_tab_unlocked(self, container: TabContainer):
+        """Handle unlocking of a password-protected tab to restore tab title and active UI."""
+        index = self.stacked_widget.indexOf(container)
+        if index != -1:
+            self.on_title_changed(container.web_view.title(), container)
+            if index == self.tab_bar.currentIndex():
+                self.on_tab_changed(index)
+
     def close_tab(self, index):
         if index < 0 or index >= self.tab_bar.count():
             return
@@ -536,13 +548,22 @@ class YourBrowserWindow(QMainWindow):
             widget = self.stacked_widget.widget(index)
             self.tab_bar.removeTab(index)
             self.stacked_widget.removeWidget(widget)
+            if hasattr(widget, "web_view") and widget.web_view:
+                page = widget.web_view.page()
+                if page:
+                    page.deleteLater()
             widget.deleteLater()
         else:
             self.add_new_tab()
             widget = self.stacked_widget.widget(0)
             self.tab_bar.removeTab(0)
             self.stacked_widget.removeWidget(widget)
+            if hasattr(widget, "web_view") and widget.web_view:
+                page = widget.web_view.page()
+                if page:
+                    page.deleteLater()
             widget.deleteLater()
+            self.setCurrentIndex(0)
 
     def reopen_closed_tab(self):
         if self.closed_tabs:
@@ -1039,7 +1060,15 @@ class YourBrowserWindow(QMainWindow):
         self.close()
 
     def closeEvent(self, event):
-        """Ensure session tabs are saved before window is closed."""
+        """Ensure session tabs are saved and web pages freed before window is closed."""
         self.save_current_session()
+        while self.stacked_widget.count() > 0:
+            widget = self.stacked_widget.widget(0)
+            self.stacked_widget.removeWidget(widget)
+            if hasattr(widget, "web_view") and widget.web_view:
+                page = widget.web_view.page()
+                if page:
+                    page.deleteLater()
+            widget.deleteLater()
         super().closeEvent(event)
 
